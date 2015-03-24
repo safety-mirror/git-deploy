@@ -15,37 +15,38 @@ services, server provisioning, etc.
     git pull staging master
     ```
 
-2. Add new service
+2. Add new app
    
     ```
     git clone https://github.com/pebble/git-deploy git-deploy
-    mkdir some-service
-    cd some-service
-    cp ../git-deploy/examples/example.env some-service.env 
-    cp ../git-deploy/examples/example@.system some-service@.system
-    cp ../git-deploy/examples/example-helper@.system some-service-helper@.system
-    cp ../git-deploy/examples/example-helper.env some-service-helper.env 
-    cp ../git-deploy/examples/Deploy Deploy
+    mkdir some-app
+    cd some-app
+    cp ../git-deploy/examples/example.env some-app.env 
+    cp ../git-deploy/examples/example@.service some-app@.service
+    cp ../git-deploy/examples/example-helper@.service some-app-helper@.service
+    cp ../git-deploy/examples/example-helper.env some-app-helper.env 
+    cp ../git-deploy/examples/config.yml config.yml
     ```
 
-3. Change Environment vars, deployment details, and services as needed
+3. Change Environment vars, deployment details, and services for app as needed
 
     ```
-    vim some-service.env 
-    vim some-service@.system
-    vim some-service-helper@@.system
-    vim Deploy
+    vim some-app.env 
+    vim some-app@.service
+    vim some-app-helper@@.service
+    vim some-app-helper.env 
+    vim config.yml
     ```
 
-4. Deploy service
+4. Deploy app
 
     ```
     git add .
-    git commit -m 'Changed var foo on some-service'
+    git commit -m 'Changed var foo on some-app'
     git push staging master
     ```
 
-    Changes are reflected in target Environment via git-hooks. The End.
+    Changes are reflected in target Environment via git-hooks.
 
 
 ## Server Setup ##
