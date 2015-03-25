@@ -9,7 +9,8 @@ services, server provisioning, etc.
 1. Setup Git-Deploy repo for target env
 
     ```
-    mkdir git-deploy
+    mkdir deploy
+    cd deploy 
     git init
     git remote add staging git@staging.tunnels.someserver.com:staging.git
     git pull staging master
@@ -19,16 +20,16 @@ services, server provisioning, etc.
    
     ```
     git clone https://github.com/pebble/git-deploy git-deploy
-    mkdir some-app
-    cd some-app
-    cp ../git-deploy/examples/example.env some-app.env 
-    cp ../git-deploy/examples/example@.service some-app@.service
-    cp ../git-deploy/examples/example-helper@.service some-app-helper@.service
-    cp ../git-deploy/examples/example-helper.env some-app-helper.env 
-    cp ../git-deploy/examples/config.yml config.yml
+    mkdir -p deploy/apps/some-app
+    cd deploy/apps/some-app
+    cp ../../git-deploy/examples/example.env some-app.env 
+    cp ../../git-deploy/examples/example@.service some-app@.service
+    cp ../../git-deploy/examples/example-helper@.service some-app-helper@.service
+    cp ../../git-deploy/examples/example-helper.env some-app-helper.env 
+    cp ../../git-deploy/examples/config.yml config.yml
     ```
 
-3. Change Environment vars, deployment details, and services for app as needed
+3. Change app environment vars, deployment details, and services as needed
 
     ```
     vim some-app.env 
@@ -38,11 +39,19 @@ services, server provisioning, etc.
     vim config.yml
     ```
 
-4. Deploy app
+4. Create any shared environment vars as needed
+
+    ```
+    mkdir -p deploy/env
+    cd deploy/env
+    vim global.env 
+    ```
+
+5. Deploy app
 
     ```
     git add .
-    git commit -m 'Changed var foo on some-app'
+    git commit -m 'Added some-app'
     git push staging master
     ```
 
