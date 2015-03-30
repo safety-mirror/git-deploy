@@ -9,7 +9,7 @@ services, server provisioning, etc.
   * Docker 1.5+
   * Systemd 218+
 
-## Server Setup ##
+## Setup ##
 
 1. Run git-deploy Docker image on CI server.
 
@@ -26,12 +26,12 @@ services, server provisioning, etc.
     docker exec -it git-deploy mkrepo staging
    ```
 
-## User Flow ##
+## Usage ##
 
-1. Setup Git-Deploy repo for target env
+1. Clone git-deploy repo for target env
 
     ```
-    git clone git@staging.tunnels.someserver.com:staging.git deploy/staging
+    git clone git@ci.someserver.com:staging.git deploy
     ```
 
 2. Set app environment vars, deployment details, and services
