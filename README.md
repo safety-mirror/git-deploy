@@ -16,7 +16,7 @@ services, server provisioning, etc.
     ```bash
     cp git-deploy/sample.env git-deploy.env
     cp git-deploy/git-deploy.service .
-    systemctl enable git-deploy.service
+    systemctl enable $PWD/git-deploy.service
     systemctl start git-deploy
     ```
 
