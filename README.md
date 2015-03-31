@@ -20,6 +20,12 @@ services, server provisioning, etc.
     systemctl start git-deploy
     ```
 
+3. Add any desired public keys
+
+    ```bash
+    docker exec -it git-deploy sh -c "curl https://github.com/someuser.keys >> .ssh/authorized_keys"
+   ```
+
 2. Setup Git-Deploy repo for each environment this deploy server can manage.
 
     ```bash
