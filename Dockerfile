@@ -20,8 +20,7 @@ RUN echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config
 RUN mkdir /var/run/sshd
 RUN chown -R git /etc/ssh
 
-ADD mkrepo.sh /usr/bin/mkrepo
-RUN chmod +x /usr/bin/mkrepo
+ADD git-shell-commands /git/git-shell-commands/
 
 EXPOSE 2222
 

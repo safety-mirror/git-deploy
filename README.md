@@ -29,7 +29,7 @@ services, server provisioning, etc.
 2. Setup Git-Deploy repo for each environment this deploy server can manage.
 
     ```bash
-    docker exec -it git-deploy mkrepo staging
+    ssh git@ci.someserver.com mkrepo staging
    ```
 
 ## Usage ##
