@@ -2,11 +2,11 @@ FROM debian:jessie
 
 RUN apt-get update && \
     LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      awscli \
       openssh-server \
       sharutils \
       vim-nox \
       curl \
+      duply \
       git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
