@@ -1,0 +1,3 @@
+#!/bin/bash
+
+duplicity --force --allow-source-mismatch $DEST /git
