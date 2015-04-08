@@ -15,6 +15,7 @@ git config --bool receive.denyCurrentBranch false
 cat <<- EOF > .git/hooks/post-receive
   cd ..
   env -i git reset --hard
+  /git/git-shell-commands/backup
   bash ./hooks/post-receive
 EOF
 chmod +x .git/hooks/post-receive
