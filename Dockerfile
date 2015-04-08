@@ -8,6 +8,7 @@ RUN apt-get update && \
       groff \
       vim-nox \
       curl \
+      duplicity \
       python-pip \
       git && \
     pip install boto && \
