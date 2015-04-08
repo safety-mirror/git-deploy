@@ -1,36 +1,34 @@
-FROM debian:jessie
+FROM gliderlabs/alpine
 
-RUN apt-get update && \
-    LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      openssh-server \
-      sharutils \
-      awscli \
-      groff \
-      vim-nox \
-      curl \
-      duplicity \
-      python-pip \
-      git && \
-    pip install boto && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apk --update add bash duplicity openssh git curl
 
+RUN adduser -D -h /git -s /usr/bin/git-shell git
+RUN echo "git:$(od -An -N20 -v -w20 -tx1 /dev/urandom | tr -d ' ')" | chpasswd
 
 ADD git-shell-commands /git/git-shell-commands/
+ADD bin /git/bin/
 
-RUN useradd -m -d /git -s /usr/bin/git-shell git
-RUN mkdir /git/.ssh
-RUN usermod -p `dd if=/dev/urandom bs=1 count=30 | uuencode -m - | head -2 | tail -1` git
-RUN sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/" /etc/ssh/sshd_config
-RUN echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config
+ADD init.sh /init.sh
+
 RUN mkdir /var/run/sshd
-RUN chown -R git /etc/ssh
+RUN echo "HostKey /git/.ssh/host_keys/ssh_host_rsa_key" >> /etc/ssh/sshd_config && \
+    echo "HostKey /git/.ssh/host_keys/ssh_host_dsa_key" >> /etc/ssh/sshd_config && \
+    echo "HostKey /git/.ssh/host_keys/ssh_host_ecdsa_key" >> /etc/ssh/sshd_config && \
+    echo "HostKey /git/.ssh/host_keys/ssh_host_ed25519_key" >> /etc/ssh/sshd_config && \
+    echo "PasswordAuthentication no" >> /etc/ssh/sshd_config && \
+    echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config
+
+RUN echo "Git-Deploy Shell" >> /etc/motd
+
 RUN chown -R git: /git/
 
-EXPOSE 2222
+ENV PORT=2222
+ENV PATH=/git/bin:/git/git-shell-commands:$PATH
+
+EXPOSE $PORT
 
 WORKDIR /git
 
 USER git
 
-CMD bash /git/git-shell-commands/restore && /usr/sbin/sshd -D -p 2222
+CMD ["bash","/init.sh"]

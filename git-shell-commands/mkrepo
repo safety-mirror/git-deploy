@@ -23,3 +23,5 @@ chmod +x .git/hooks/post-receive
 ln -s -f ../../hooks/post-merge .git/hooks/post-merge
 
 cd /git
+
+backup
