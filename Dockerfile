@@ -16,14 +16,14 @@ RUN echo "HostKey /git/.ssh/host_keys/ssh_host_rsa_key" >> /etc/ssh/sshd_config 
 ENV PORT=2222
 ENV PATH=/git/bin:/git/git-shell-commands:$PATH
 
-RUN echo "Git-Deploy Shell" >> /etc/motd
+RUN echo "Git-Deploy Shell" > /etc/motd
 
 EXPOSE $PORT
 
 WORKDIR /git
 
 ADD git-shell-commands /git/git-shell-commands/
-ADD bin /git/bin/
+ADD bin /usr/local/bin/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
 
