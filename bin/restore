@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ~/.profile
+
 if [ "$DEBUG" = true ]; then
     DEBUG_ARGS="-v9"
 fi

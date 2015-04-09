@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ~/.profile
+
 REPO_NAME=$1
 
 if [ -z "$1" ]; then
