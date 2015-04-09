@@ -1,6 +1,7 @@
 FROM gliderlabs/alpine
 
-RUN apk --update add bash duplicity openssh git curl
+RUN apk --update add bash duplicity openssh git curl python py-pip
+RUN pip install awscli
 
 RUN adduser -D -h /git -s /usr/bin/git-shell git
 RUN echo "git:$(od -An -N20 -v -w20 -tx1 /dev/urandom | tr -d ' ')" | chpasswd
