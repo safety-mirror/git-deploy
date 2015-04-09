@@ -23,7 +23,7 @@ EXPOSE $PORT
 WORKDIR /git
 
 ADD bin /usr/local/bin/
-ADD git-shell-commands /git/git-shell-commands/
+RUN mkdir git-shell-commands && ln -s /usr/local/bin/* git-shell-commands/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
 
