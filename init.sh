@@ -13,5 +13,10 @@ done
 
 backup
 
+rm /git/.profile
+for LINE in `env`; do
+    echo "export $LINE" >> ~/.profile;
+done
+
 echo "Starting Git-Deploy on port $PORT"
 /usr/sbin/sshd -D -p $PORT
