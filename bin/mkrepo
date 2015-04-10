@@ -1,4 +1,5 @@
 #!/bin/bash
+source ~/.profile
 
 REPO_NAME=$1
 
