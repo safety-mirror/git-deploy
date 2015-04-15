@@ -1,10 +1,16 @@
-FROM gliderlabs/alpine
+FROM debian:jessie
 
-RUN apk --update add bash duplicity openssh git curl python py-pip
-RUN pip install awscli
+RUN apt-get update && \
+    LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    duplicity \
+    openssh-server \
+    git \
+    curl \
+    python-pip
+RUN pip install awscli boto
 
-RUN adduser -D -h /git -s /usr/bin/git-shell git
-RUN echo "git:$(od -An -N20 -v -w20 -tx1 /dev/urandom | tr -d ' ')" | chpasswd
+RUN useradd -m -d /git -s /usr/bin/git-shell git
+RUN usermod -p $(od -An -N20 -v -w20 -tx1 /dev/urandom | tr -d ' ') git
 
 RUN mkdir /var/run/sshd
 RUN echo "HostKey /git/.ssh/host_keys/ssh_host_rsa_key" >> /etc/ssh/sshd_config && \

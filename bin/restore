@@ -3,7 +3,7 @@
 source ~/.profile
 
 if [ "$DEBUG" = true ]; then
-    DEBUG_ARGS="-v9"
+    DEBUG_ARGS="--gpg-options="-v" -v9"
 fi
 
 duplicity $DEBUG_ARGS --force --allow-source-mismatch $DEST /git
