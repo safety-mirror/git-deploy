@@ -1,0 +1,18 @@
+[Unit]
+Description=Example App Helper Service
+BindsTo=example-app@%i.service
+After=example-app@%i.service
+
+[Service]
+User=core
+Restart=on-failure
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill %p
+ExecStartPre=-/usr/bin/docker rm %p
+ExecStart=/usr/bin/docker run --rm --name %p -e AWS_REGION=us-east-2 -e ELB_NAME=example-app-%i pebble/helper
+ExecStop=/usr/bin/docker stop %p
+
+[X-Fleet]
+Global=true
+MachineMetadata=service=example-app-%i
+

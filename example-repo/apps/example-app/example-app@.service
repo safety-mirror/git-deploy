@@ -1,0 +1,20 @@
+[Unit]
+Description=Example App
+Wants=example-app-helper@%i
+
+[Service]
+User=core
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker pull pebble/example-app:%i
+ExecStartPre=/bin/sh -c "source /etc/profile.d/etcdctl.sh; for key in $(etcdctl ls /env/%p/%i); do keyname=$(echo $key | awk -F / '{print $5}'); echo $keyname=$(etcdctl get --consistent $key) >> /home/core/%p-env; done"
+ExecStartPre=-/usr/bin/docker kill example-app
+ExecStartPre=-/usr/bin/docker rm example-app
+ExecStart=/usr/bin/docker run --rm --name example-app --env-file=/home/core/example-app-env -p 80:8080 pebble/example-app:%i
+ExecStartPost=/bin/sh -c "sleep 5; echo '' > /home/core/%p-env"
+ExecStop=/usr/bin/docker stop example-app
+
+[X-Fleet]
+Global=true
+MachineMetadata=service=example-app-%i
+
