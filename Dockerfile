@@ -6,6 +6,7 @@ RUN apt-get update && \
     openssh-server \
     git \
     curl \
+    jq \
     python-pip
 RUN pip install awscli boto
 
