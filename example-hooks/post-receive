@@ -1,0 +1,8 @@
+#!/bin/bash
+
+source hooks/config.env
+
+bash hooks/scripts/notify-hipchat.sh
+bash hooks/scripts/update-etcd.sh
+ruby hooks/scripts/register-services.rb
+python hooks/scripts/provision-servers.py
