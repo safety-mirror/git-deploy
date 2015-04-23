@@ -72,3 +72,15 @@ services, server provisioning, etc.
     ```
 
     Changes are reflected in target Environment via defined git-hooks.
+
+## Testing ##
+
+To run tests you will need:
+  * [bats](https://github.com/sstephenson/bats) installed
+  * port 2222 open
+  * working ssh public keys in your ~/.ssh folder
+
+Run tests:
+```
+bats test/test.bats
+```
