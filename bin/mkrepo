@@ -17,7 +17,7 @@ git init
 git config --bool receive.denyCurrentBranch false
 
 # Populate new repos with a base 'proxy' hook.
-# On receiving a new push this will make a rpos:
+# This hook will perform the following for every new push:
 # 1. Update the working tree
 # 2. Run the latest '/hooks/post-receive' script from the latest HEAD
 cat <<- EOF > .git/hooks/post-receive
