@@ -24,7 +24,6 @@ cat <<- EOF > .git/hooks/post-receive
 	#!/bin/bash
 	source /git/.profile
 	cd ..
-	env -i git reset --hard
 	backup
 	if [ -f ./hooks/post-receive ]; then
 		bash ./hooks/post-receive
