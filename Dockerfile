@@ -38,6 +38,8 @@ RUN mkdir git-shell-commands && ln -s /usr/local/bin/* git-shell-commands/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
 
+VOLUME /git
+
 USER git
 
 CMD ["bash","/init.sh"]
