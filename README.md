@@ -73,6 +73,17 @@ services, server provisioning, etc.
 
     Changes are reflected in target Environment via defined git-hooks.
 
+## Debugging ##
+
+If you need to manually debug/edit the hooks of a repo after creation, you can
+mount the running /git volume within a debug environment such as a debian
+container like so:
+
+```bash
+docker run -ti --volumes-from=git-deploy debian bash
+vim /git/somerepo.git/.git/hooks/post-receive
+```
+
 ## Testing ##
 
 To run tests you will need:
