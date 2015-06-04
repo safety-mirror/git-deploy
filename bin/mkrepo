@@ -20,11 +20,12 @@ git config --bool receive.denyCurrentBranch false
 # This hook will perform the following for every new push:
 # 1. Update the working tree
 # 2. Run the '/hooks/post-receive' script from the latest HEAD
-cat <<- EOF > .git/hooks/post-receive
+cat <<- "EOF" > .git/hooks/post-receive
 	#!/bin/bash
 	source /git/.profile
 	cd ..
-    env -i git reset --hard
+	export ORIG_HEAD="$(cat .git/ORIG_HEAD)"	
+	env -i git reset --hard
 	backup
 	if [ -f ./hooks/post-receive ]; then
 		bash ./hooks/post-receive
