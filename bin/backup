@@ -6,4 +6,4 @@ if [ "$DEBUG" = true ]; then
     DEBUG_ARGS="-v9"
 fi
 
-duplicity $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
+duplicity full $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
