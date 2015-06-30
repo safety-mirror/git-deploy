@@ -25,7 +25,7 @@ RUN mkdir -p /backup_volume
 RUN chown -R git:git /backup_volume
 
 ENV PORT=2222
-ENV PATH=/git/bin:/git/git-shell-commands:$PATH
+ENV PATH=/git/bin:/git/git-shell-commands:/opt/git-deploy/bin:$PATH
 
 RUN echo "Git-Deploy Shell" > /etc/motd
 
@@ -33,8 +33,8 @@ EXPOSE $PORT
 
 WORKDIR /git
 
-ADD bin /usr/local/bin/
-RUN mkdir git-shell-commands && ln -s /usr/local/bin/* git-shell-commands/
+ADD bin /opt/git-deploy/bin/
+RUN mkdir git-shell-commands && ln -s /opt/git-deploy/bin/* git-shell-commands/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
 
