@@ -23,7 +23,6 @@ git config --bool receive.denyCurrentBranch false
 # 3. Run user-defined post-receive hook
 # 4. Backup
 
-ln -s .git/hooks/pre-receive ../hooks/pre-receive
 cat <<- "EOF" > .git/hooks/pre-receive
 	#!/bin/bash
 	source ~/.profile
