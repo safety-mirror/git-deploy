@@ -1,5 +1,10 @@
 load test_helper
 
+@test "Prepare environment" {
+    run prepare_environment
+    [ "$status" -eq 0 ]
+}
+
 @test "Build container" {
     run build_container
     [ "$status" -eq 0 ]
@@ -17,7 +22,7 @@ load test_helper
 }
 
 @test "Import ssh keys into container" {
-    run import_pubkeys
+    run import_sshkey
     [ "$status" -eq 0 ]
 }
 
@@ -50,3 +55,20 @@ load test_helper
     run push_test_commit testrepo
     [ "$status" -eq 0 ]
 }
+
+@test "Add pre-commit hook" {
+    run push_failing_hook testrepo
+    [ "$status" -eq 0 ]
+}
+
+@test "Pre-Commit hook can allow commit" {
+    run push_test_commit testrepo goodfile
+    [ "$status" -eq 0 ]
+}
+
+@test "Pre-Commit hook can reject commit" {
+    run push_test_commit testrepo badfile
+    [ "$status" -eq 1 ]
+}
+
+

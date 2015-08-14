@@ -16,21 +16,35 @@ git init
 #allow working tree to be checked out on receive
 git config --bool receive.denyCurrentBranch false
 
-# Populate new repos with a base 'proxy' hook.
-# This hook will perform the following for every new push:
-# 1. Update the working tree
-# 2. Run the '/hooks/post-receive' script from the latest HEAD
+# Populate new repos with a base 'proxy' hooks
+# This hooks will perform the following for every new push:
+# 1. Run user-defined pre-receive/update hooks
+# 2. Update the working tree
+# 3. Run user-defined post-receive hook
+# 4. Backup
+
+ln -s .git/hooks/pre-receive ../hooks/pre-receive
+cat <<- "EOF" > .git/hooks/pre-receive
+	#!/bin/bash
+	source ~/.profile
+	unset GIT_DIR
+	cd ..
+	env -i git reset --hard
+	[ ! -f hooks/pre-receive ] || bash hooks/pre-receive <&0
+EOF
+cat <<- "EOF" > .git/hooks/update
+	#!/bin/bash
+	source ~/.profile
+	[ ! -f ../hooks/update ] || bash ../hooks/update $@
+EOF
 cat <<- "EOF" > .git/hooks/post-receive
 	#!/bin/bash
-	source /git/.profile
-	cd ..
-	export ORIG_HEAD="$(cat .git/ORIG_HEAD)"	
-	env -i git reset --hard
+	source ~/.profile
+	[ ! -f ../hooks/post-receive ] || bash ../hooks/post-receive
 	backup
-	if [ -f ./hooks/post-receive ]; then
-		bash ./hooks/post-receive
-	fi
 EOF
+chmod +x .git/hooks/pre-receive
+chmod +x .git/hooks/update
 chmod +x .git/hooks/post-receive
 
 # Backup addition of new repo
