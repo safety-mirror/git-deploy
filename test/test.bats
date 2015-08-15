@@ -57,16 +57,41 @@ load test_helper
 }
 
 @test "Add pre-commit hook" {
-	run push_failing_hook testrepo
+	run push_hook testrepo pre-receive
 	[ "$status" -eq 0 ]
 }
 
-@test "Pre-Commit hook can allow commit" {
+@test "Pre-Commit hook can allow file" {
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
 }
 
-@test "Pre-Commit hook can reject commit" {
+@test "Pre-Commit hook can reject file" {
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
+}
+
+@test "Add update hook" {
+	run push_hook testrepo update
+	[ "$status" -eq 0 ]
+}
+
+@test "Update hook can allow file" {
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+}
+
+@test "Update hook can reject file" {
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
+@test "Add post-commit hook" {
+	run push_hook testrepo post-commit
+	[ "$status" -eq 0 ]
+}
+
+@test "Post-Commit hook can echo text" {
+	run push_test_commit testrepo somefile
+	echo "${lines[19]}" | grep "post-commit success"
 }

@@ -78,6 +78,7 @@ push_test_commit() {
 	local file_name=${2-test}
 	if [ -d "/tmp/git-deploy-test/$1" ]; then
 		cd /tmp/git-deploy-test/$1
+		git reset --hard origin/master
 		date >> $file_name
 		git add .
 		git commit -m "test commit"
@@ -89,26 +90,56 @@ push_test_commit() {
 	fi
 }
 
-push_failing_hook() {
-	if [ -d "/tmp/git-deploy-test/$1" ]; then
-		cd /tmp/git-deploy-test/$1
+push_hook() {
+	local repo=${1-testrepo}
+	local hook_name=${2-test}
+	if [ -d "/tmp/git-deploy-test/$repo" ]; then
+		cd /tmp/git-deploy-test/$repo
+		git reset --hard origin/master
 		mkdir -p hooks
-		cat <<- "EOF" > hooks/pre-receive
-			#!/bin/bash
+		rm -rf hooks/*
+		case $hook_name in
+			pre-receive)
+				cat <<- "EOF" > hooks/pre-receive
+					#!/bin/bash
 
-			# exit if we see 'badfile' in the list of files
-			while read oldrev newrev refname; do
-				for file in $(git diff --name-only $oldrev..$newrev); do
-					[ $file != 'badfile' ] || exit 1
-				done
-			done
-		EOF
+					# exit if we see 'badfile' in the list of files
+					while read oldrev newrev refname; do
+						for file in $(git diff --name-only $oldrev..$newrev); do
+							echo file=$file
+							[ $file != 'badfile' ] || exit 1
+						done
+					done
+				EOF
+				;;
+			update)
+				cat <<- "EOF" > hooks/update
+					#!/bin/bash
+
+					refname="$1"
+					oldrev="$2"
+					newrev="$3"
+
+					# exit if we see 'badfile' in the list of files
+					for file in $(git diff --name-only $oldrev..$newrev); do
+						[ $file != 'badfile' ] || exit 1
+					done
+				EOF
+				;;
+			post-commit)
+				cat <<- "EOF" > hooks/update
+					#!/bin/bash
+
+					echo post-commit success
+				EOF
+				;;
+		esac
 		git add .
-		git commit -m 'add pre-receive hook'
+		git commit -m "add $hook_name hook"
 		GIT_SSH="/tmp/git-deploy-test/gitssh" \
 		git push origin master
 	else
-		echo "/tmp/git-deploy-test/$1 does not exist"
+		echo "/tmp/git-deploy-test/$repo does not exist"
 		exit 1
 	fi
 }
