@@ -106,7 +106,6 @@ push_hook() {
 					# exit if we see 'badfile' in the list of files
 					while read oldrev newrev refname; do
 						for file in $(git diff --name-only $oldrev..$newrev); do
-							echo file=$file
 							[ $file != 'badfile' ] || exit 1
 						done
 					done
