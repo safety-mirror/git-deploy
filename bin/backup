@@ -3,11 +3,11 @@
 source ~/.profile
 
 if [ "$1" = "full" ]; then
-    FULL='full'
+	FULL='full'
 fi
 
 if [ "$DEBUG" = true ]; then
-    DEBUG_ARGS="-v9"
+	DEBUG_ARGS="-v9"
 fi
 
 duplicity $FULL $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
