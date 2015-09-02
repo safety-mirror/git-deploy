@@ -52,3 +52,35 @@ teardown(){
 	run push_test_commit testrepo somefile
     echo "${lines[5]}" | grep "post-commit success"
 }
+
+@test "Create external hook repo" {
+	run ssh_command "mkrepo hookrepo"
+	[ "$status" -eq 0 ]
+}
+
+@test "Clone external hook repo" {
+	run clone_repo hookrepo
+	[ "$status" -eq 0 ]
+}
+
+@test "Run container with external hook repo" {
+    run destroy_container
+	run run_container hookrepo
+	[ "$status" -eq 0 ]
+}
+
+@test "Add pre-commit hook to hook repo" {
+	run push_hook hookrepo pre-receive
+	[ "$status" -eq 0 ]
+}
+
+@test "External Pre-Commit hook can allow file" {
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+}
+
+@test "External Pre-Commit hook can reject file" {
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+	skip "${lines}"
+}

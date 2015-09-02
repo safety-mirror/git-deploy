@@ -18,8 +18,8 @@ git config --bool receive.denyCurrentBranch false
 
 # Populate new repos with a base 'proxy' hooks
 # This hooks will perform the following for every new push:
-# 1. Run user-defined pre-receive/update hooks
-# 2. Update the working tree
+# 1. Update the working tree
+# 2. Run user-defined pre-receive/update hooks
 # 3. Run user-defined post-receive hook
 # 4. Backup
 
@@ -29,17 +29,41 @@ cat <<- "EOF" > .git/hooks/pre-receive
 	unset GIT_DIR
 	cd ..
 	env -i git reset --hard
-	[ ! -f hooks/pre-receive ] || bash hooks/pre-receive <&0
+
+	# Update/use hooks from external repo if configured
+	if [ ! -z "$HOOKS_REPO" ]; then
+		repo_name=$(basename $(git rev-parse --show-toplevel) | sed 's/\.git//g')
+		hook_dir="/git/hook-repos/${repo_name}"]
+		if [ -d "/git/hook-repos/${repo_name}"]; then
+			mkdir -p $hook_dir
+			git clone $HOOKS_REPO $hook_dir
+		fi
+		git --git-dir="$HOOKS_REPO/.git" --work-dir="$HOOKS_REPO" pull
+	else
+		hook_dir="hooks"
+	fi
+
+	[ ! -f "$hook_dir/pre-receive" ] || bash $hook_dir/pre-receive <&0
 EOF
 cat <<- "EOF" > .git/hooks/update
 	#!/bin/bash
 	source ~/.profile
-	[ ! -f ../hooks/update ] || bash ../hooks/update $@
+	if [ ! -z "$HOOKS_REPO" ]; then
+		hook_dir="/git/hook-repos/${repo_name}"]
+	else
+		hook_dir="../hooks"
+	fi
+	[ ! -f "$hook_dir/update" ] || bash $hook_dir/update $@
 EOF
 cat <<- "EOF" > .git/hooks/post-receive
 	#!/bin/bash
 	source ~/.profile
-	[ ! -f ../hooks/post-receive ] || bash ../hooks/post-receive
+	if [ ! -z "$HOOKS_REPO" ]; then
+		hook_dir="/git/hook-repos/${repo_name}"]
+	else
+		hook_dir="../hooks"
+	fi
+	[ ! -f "$hook_dir/post-receive" ] || bash $hook_dir/post-receive
 	backup
 EOF
 chmod +x .git/hooks/pre-receive
