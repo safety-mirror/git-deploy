@@ -1,7 +1,3 @@
-export GIT_SSH_COMMAND=" ssh \
-	-o UserKnownHostsFile=/dev/null \
-	-o StrictHostKeyChecking=no"
-
 destroy_data_volume(){
 	docker rm -f test-git-deploy-data  &> /dev/null || return 0
 }
@@ -15,19 +11,21 @@ create_data_volume(){
 }
 
 build_container(){
-	docker build -t pebble/git-deploy .
+	docker build -t pebble/test-git-deploy .
 }
 
 run_container(){
+	local hook_repo=${1-}
 	docker run \
 		-d \
 		--name test-git-deploy \
 		-e DEST=file:///backup_volume \
 		-e PASSPHRASE=a_test_passphrase \
+		-e HOOK_REPO=$hook_repo \
 		--volumes-from test-git-deploy-data \
 		-p 2222:2222 \
 		-e "DEBUG=true" \
-		pebble/git-deploy &> /dev/null
+		pebble/test-git-deploy &> /dev/null
 	sleep 5
 }
 
@@ -35,19 +33,8 @@ destroy_container(){
 	docker rm -f test-git-deploy &> /dev/null || return 0
 }
 
-prepare_environment(){
-	destroy_container
-	destroy_data_volume
-	rm -rf /tmp/git-deploy-test
-	mkdir -p /tmp/git-deploy-test
+gen_sshkey(){
 	ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/sshkey -q -N ""
-	cat <<- "EOF" > /tmp/git-deploy-test/gitssh
-		#!/bin/bash
-		exec /usr/bin/ssh \
-			-o StrictHostKeyChecking=no \
-			-i /tmp/git-deploy-test/sshkey "$@"
-	EOF
-	chmod +x /tmp/git-deploy-test/gitssh
 }
 
 import_sshkey(){
@@ -58,8 +45,23 @@ import_sshkey(){
 			< /tmp/git-deploy-test/sshkey.pub
 }
 
+git(){
+	if [ ! -f /tmp/git-deploy-test/gitssh ]; then
+		cat <<- "EOF" > /tmp/git-deploy-test/gitssh
+			#!/bin/bash
+			exec /usr/bin/ssh \
+				-o UserKnownHostsFile=/dev/null \
+				-o StrictHostKeyChecking=no \
+				-i /tmp/git-deploy-test/sshkey $*
+		EOF
+		chmod +x /tmp/git-deploy-test/gitssh
+	fi
+	GIT_SSH="/tmp/git-deploy-test/gitssh" /usr/bin/git "$@"
+}
+
 clone_repo(){
-	GIT_SSH="/tmp/git-deploy-test/gitssh" \
+	cd
+	rm -rf /tmp/git-deploy-test/$1
 	git clone ssh://git@localhost:2222/git/${1}.git /tmp/git-deploy-test/$1
 }
 
@@ -78,11 +80,9 @@ push_test_commit() {
 	local file_name=${2-test}
 	if [ -d "/tmp/git-deploy-test/$1" ]; then
 		cd /tmp/git-deploy-test/$1
-		git reset --hard origin/master
 		date >> $file_name
 		git add .
 		git commit -m "test commit"
-		GIT_SSH="/tmp/git-deploy-test/gitssh" \
 		git push origin master
 	else
 		echo "/tmp/git-deploy-test/$1 does not exist"
@@ -95,7 +95,6 @@ push_hook() {
 	local hook_name=${2-test}
 	if [ -d "/tmp/git-deploy-test/$repo" ]; then
 		cd /tmp/git-deploy-test/$repo
-		git reset --hard origin/master
 		mkdir -p hooks
 		rm -rf hooks/*
 		case $hook_name in
@@ -135,7 +134,6 @@ push_hook() {
 		esac
 		git add .
 		git commit -m "add $hook_name hook"
-		GIT_SSH="/tmp/git-deploy-test/gitssh" \
 		git push origin master
 	else
 		echo "/tmp/git-deploy-test/$repo does not exist"
