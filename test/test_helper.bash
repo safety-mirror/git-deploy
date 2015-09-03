@@ -27,6 +27,8 @@ run_container(){
 		-e "DEBUG=true" \
 		pebble/test-git-deploy &> /dev/null
 	sleep 5
+	gen_sshkey
+	import_sshkey
 }
 
 destroy_container(){
@@ -60,9 +62,11 @@ git(){
 }
 
 clone_repo(){
+	oldpwd=$(pwd)
 	cd
 	rm -rf /tmp/git-deploy-test/$1
 	git clone ssh://git@localhost:2222/git/${1}.git /tmp/git-deploy-test/$1
+	cd $oldpwd
 }
 
 ssh_command(){
@@ -78,12 +82,12 @@ ssh_command(){
 push_test_commit() {
 	local repo=${1-testrepo}
 	local file_name=${2-test}
-	if [ -d "/tmp/git-deploy-test/$1" ]; then
-		cd /tmp/git-deploy-test/$1
-		date >> $file_name
-		git add .
-		git commit -m "test commit"
-		git push origin master
+	local repo_folder="/tmp/git-deploy-test/$1"
+	if [ -d "$repo_folder" ]; then
+		date >> $repo_folder/$file_name
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "test commit"
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
 	else
 		echo "/tmp/git-deploy-test/$1 does not exist"
 		exit 1
@@ -92,49 +96,16 @@ push_test_commit() {
 
 push_hook() {
 	local repo=${1-testrepo}
-	local hook_name=${2-test}
-	if [ -d "/tmp/git-deploy-test/$repo" ]; then
-		cd /tmp/git-deploy-test/$repo
-		mkdir -p hooks
-		rm -rf hooks/*
-		case $hook_name in
-			pre-receive)
-				cat <<- "EOF" > hooks/pre-receive
-					#!/bin/bash
-
-					# exit if we see 'badfile' in the list of files
-					while read oldrev newrev refname; do
-						for file in $(git diff --name-only $oldrev..$newrev); do
-							[ $file != 'badfile' ] || exit 1
-						done
-					done
-				EOF
-				;;
-			update)
-				cat <<- "EOF" > hooks/update
-					#!/bin/bash
-
-					refname="$1"
-					oldrev="$2"
-					newrev="$3"
-
-					# exit if we see 'badfile' in the list of files
-					for file in $(git diff --name-only $oldrev..$newrev); do
-						[ $file != 'badfile' ] || exit 1
-					done
-				EOF
-				;;
-			post-commit)
-				cat <<- "EOF" > hooks/update
-					#!/bin/bash
-
-					echo post-commit success
-				EOF
-				;;
-		esac
-		git add .
-		git commit -m "add $hook_name hook"
-		git push origin master
+	local hook_file=${2-test}
+	local hook_name=$(basename $hook_file)
+	local hook_folder=$(dirname $hook_file)
+	local repo_folder="/tmp/git-deploy-test/$repo/"
+	if [ -d "$repo_folder" ]; then
+		mkdir -p $repo_folder/$hook_folder
+		cp $PWD/test/test-hooks/$hook_name $repo_folder/$hook_file
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "add $hook_name hook"
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
 	else
 		echo "/tmp/git-deploy-test/$repo does not exist"
 		exit 1
