@@ -9,8 +9,8 @@ if [ -z "$1" ]; then
 fi
 
 # Create repo
-mkdir -p /git/${REPO_NAME}.git
-cd /git/${REPO_NAME}.git
+mkdir -p /git/${REPO_NAME}
+cd /git/${REPO_NAME}
 git init
 
 #allow working tree to be checked out on receive
@@ -31,14 +31,13 @@ cat <<- "EOF" > .git/hooks/pre-receive
 	env -i git reset --hard
 
 	# Update/use hooks from external repo if configured
-	if [ ! -z "$HOOKS_REPO" ]; then
-		repo_name=$(basename $(git rev-parse --show-toplevel) | sed 's/\.git//g')
-		hook_dir="/git/hook-repos/${repo_name}"]
-		if [ -d "/git/hook-repos/${repo_name}"]; then
+	if [ ! -z "$HOOK_REPO" ]; then
+		hook_dir="/git/hooks"
+		if [ ! -d "$hook_dir" ]; then
 			mkdir -p $hook_dir
-			git clone $HOOKS_REPO $hook_dir
+			git clone $HOOK_REPO $hook_dir
 		fi
-		git --git-dir="$HOOKS_REPO/.git" --work-dir="$HOOKS_REPO" pull
+		git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
 	else
 		hook_dir="hooks"
 	fi
@@ -48,8 +47,8 @@ EOF
 cat <<- "EOF" > .git/hooks/update
 	#!/bin/bash
 	source ~/.profile
-	if [ ! -z "$HOOKS_REPO" ]; then
-		hook_dir="/git/hook-repos/${repo_name}"]
+	if [ ! -z "$HOOK_REPO" ]; then
+		hook_dir="/git/hooks"
 	else
 		hook_dir="../hooks"
 	fi
@@ -58,8 +57,8 @@ EOF
 cat <<- "EOF" > .git/hooks/post-receive
 	#!/bin/bash
 	source ~/.profile
-	if [ ! -z "$HOOKS_REPO" ]; then
-		hook_dir="/git/hook-repos/${repo_name}"]
+	if [ ! -z "$HOOK_REPO" ]; then
+		hook_dir="/git/hooks"
 	else
 		hook_dir="../hooks"
 	fi

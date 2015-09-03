@@ -36,7 +36,9 @@ destroy_container(){
 }
 
 gen_sshkey(){
-	ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/sshkey -q -N ""
+	if [ ! -f /tmp/git-deploy-test/sshkey ]; then
+		ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/sshkey -q -N ""
+	fi
 }
 
 import_sshkey(){
@@ -65,7 +67,7 @@ clone_repo(){
 	oldpwd=$(pwd)
 	cd
 	rm -rf /tmp/git-deploy-test/$1
-	git clone ssh://git@localhost:2222/git/${1}.git /tmp/git-deploy-test/$1
+	git clone ssh://git@localhost:2222/git/${1} /tmp/git-deploy-test/$1
 	cd $oldpwd
 }
 

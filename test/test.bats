@@ -23,7 +23,7 @@ teardown(){
 	[ "$status" -eq 0 ]
 }
 
-@test "Pre-Receive hook can reject bad commit" {
+@test "Internal pre-receive hook can reject bad commit" {
     run_container
     ssh_command "mkrepo testrepo"
 	clone_repo testrepo
@@ -36,7 +36,28 @@ teardown(){
 	[ "$status" -eq 1 ]
 }
 
-@test "Update hook can reject bad commit" {
+@test "External pre-receive hook can reject bad commit" {
+    run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+    destroy_container
+    run_container /git/testhookrepo
+
+    run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo pre-receive
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+    run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
+@test "Internal update hook can reject bad commit" {
     run_container
     ssh_command "mkrepo testrepo"
 	clone_repo testrepo
@@ -47,26 +68,46 @@ teardown(){
 	[ "$status" -eq 1 ]
 }
 
-@test "Post-Commit hook can echo text" {
+@test "External update hook can reject bad commit" {
+    run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+    destroy_container
+    run_container /git/testhookrepo
+
+    run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo update
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+    run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
+@test "Internal post-receive hook can echo text" {
     run_container
     ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-	push_hook testrepo hooks/post-commit
+	push_hook testrepo hooks/post-receive
 	run push_test_commit testrepo somefile
-    echo "${lines[19]}" | grep "post-commit success"
+    echo "${lines[5]}" | grep "post-receive success"
 }
 
-@test "External pre-receive hook can reject bad commit" {
+@test "External post-receive hook can echo text" {
     run_container
-	ssh_command "mkrepo hookrepo"
+	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
-	clone_repo hookrepo
+	clone_repo testhookrepo
 	clone_repo testrepo
     destroy_container
-    run_container hookrepo
-	push_hook hookrepo pre-receive
-	run push_test_commit testrepo goodfile
-	[ "$status" -eq 0 ]
-    run push_test_commit testrepo badfile
-	[ "$status" -eq 1 ]
+    run_container /git/testhookrepo
+
+	push_hook testhookrepo post-receive
+    run push_test_commit testrepo somefile
+    echo "${lines[6]}" | grep "post-receive success"
 }
