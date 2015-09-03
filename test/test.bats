@@ -1,7 +1,6 @@
 load test_helper
 
 setup(){
-    #build_container
 	mkdir -p /tmp/git-deploy-test
 	create_data_volume
 }
@@ -10,6 +9,11 @@ teardown(){
 	rm -rf /tmp/git-deploy-test
 	destroy_data_volume
 	destroy_container
+}
+
+@test "Can build container" {
+    run build_container
+	[ "$status" -eq 0 ]
 }
 
 @test "Can backup and restore a repository" {
