@@ -42,7 +42,11 @@ cat <<- "EOF" > .git/hooks/pre-receive
 		hook_dir="hooks"
 	fi
 
-	[ ! -f "$hook_dir/pre-receive" ] || bash $hook_dir/pre-receive <&0
+	if [ -f "$hook_dir/pre-receive" ]; then
+		( flock -nx 201 || exit 1
+			bash $hook_dir/pre-receive <&0
+		) 201>pre_receive_lock
+	fi
 EOF
 cat <<- "EOF" > .git/hooks/update
 	#!/bin/bash

@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # exit if we see 'badfile' in the list of files
+# drop a breadcrumb and sleep if we see 'slowfile' in the list of files
 while read oldrev newrev refname; do
-	if [[ $oldrev =~ 0+ ]]; then
+	if [[ $oldrev =~ ^0+$ ]]; then
 		FILES=$(git show --pretty="format:" --name-only $newrev)
 	else
 		FILES=$(git diff --name-only $oldrev..$newrev)
@@ -10,5 +11,11 @@ while read oldrev newrev refname; do
 
 	for file in $FILES; do
 		[ $file != 'badfile' ] || exit 1
+		if [ "$file" == 'slowfile' ]; then
+			touch breadcrumb
+			sleep 5
+			# pick up breadcrumb if it exists; fail if it was stolen (by a concurrent hook)
+			[ -f breadcrumb ] && rm -f breadcrumb || exit 1
+		fi
 	done
 done
