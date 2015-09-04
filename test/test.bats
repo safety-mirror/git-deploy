@@ -60,6 +60,21 @@ teardown(){
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
 }
+@test "External pre-receive hook can reject bad commit without priming" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	push_hook testhookrepo pre-receive
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
 
 @test "Internal update hook can reject bad commit" {
 	run_container
