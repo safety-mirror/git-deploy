@@ -1,3 +1,9 @@
+if which docker-machine > /dev/null; then
+	export DOCKER_HOST_IP=$(docker-machine ip `docker-machine active`)
+else
+	export DOCKER_HOST_IP="localhost"
+fi
+
 destroy_data_volume(){
 	docker rm -f test-git-deploy-data  &> /dev/null || return 0
 }
@@ -6,7 +12,7 @@ create_data_volume(){
 	docker run \
 		-v /backup_volume \
 		--name test-git-deploy-data \
-		pebble/git-deploy \
+		pebble/test-git-deploy \
 		true &> /dev/null
 }
 
@@ -67,7 +73,7 @@ clone_repo(){
 	oldpwd=$(pwd)
 	cd
 	rm -rf /tmp/git-deploy-test/$1
-	git clone ssh://git@localhost:2222/git/${1} /tmp/git-deploy-test/$1
+	git clone ssh://git@${DOCKER_HOST_IP}:2222/git/${1} /tmp/git-deploy-test/$1
 	cd $oldpwd
 }
 
@@ -77,7 +83,7 @@ ssh_command(){
 		-i /tmp/git-deploy-test/sshkey \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
-		git@localhost \
+		git@${DOCKER_HOST_IP} \
 		$1
 }
 
