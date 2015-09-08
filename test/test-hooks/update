@@ -1,0 +1,10 @@
+#!/bin/bash
+
+refname="$1"
+oldrev="$2"
+newrev="$3"
+
+# exit if we see 'badfile' in the list of files
+for file in $(git diff --name-only $oldrev..$newrev); do
+	[ $file != 'badfile' ] || exit 1
+done

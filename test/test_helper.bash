@@ -1,6 +1,8 @@
-export GIT_SSH_COMMAND=" ssh \
-	-o UserKnownHostsFile=/dev/null \
-	-o StrictHostKeyChecking=no"
+if which docker-machine > /dev/null; then
+	export DOCKER_HOST_IP=$(docker-machine ip `docker-machine active`)
+else
+	export DOCKER_HOST_IP="localhost"
+fi
 
 destroy_data_volume(){
 	docker rm -f test-git-deploy-data  &> /dev/null || return 0
@@ -10,44 +12,39 @@ create_data_volume(){
 	docker run \
 		-v /backup_volume \
 		--name test-git-deploy-data \
-		pebble/git-deploy \
+		pebble/test-git-deploy \
 		true &> /dev/null
 }
 
 build_container(){
-	docker build -t pebble/git-deploy .
+	docker build -t pebble/test-git-deploy .
 }
 
 run_container(){
+	local hook_repo=${1-}
 	docker run \
 		-d \
 		--name test-git-deploy \
 		-e DEST=file:///backup_volume \
 		-e PASSPHRASE=a_test_passphrase \
+		-e HOOK_REPO=$hook_repo \
 		--volumes-from test-git-deploy-data \
 		-p 2222:2222 \
 		-e "DEBUG=true" \
-		pebble/git-deploy &> /dev/null
+		pebble/test-git-deploy &> /dev/null
 	sleep 5
+	gen_sshkey
+	import_sshkey
 }
 
 destroy_container(){
 	docker rm -f test-git-deploy &> /dev/null || return 0
 }
 
-prepare_environment(){
-	destroy_container
-	destroy_data_volume
-	rm -rf /tmp/git-deploy-test
-	mkdir -p /tmp/git-deploy-test
-	ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/sshkey -q -N ""
-	cat <<- "EOF" > /tmp/git-deploy-test/gitssh
-		#!/bin/bash
-		exec /usr/bin/ssh \
-			-o StrictHostKeyChecking=no \
-			-i /tmp/git-deploy-test/sshkey "$@"
-	EOF
-	chmod +x /tmp/git-deploy-test/gitssh
+gen_sshkey(){
+	if [ ! -f /tmp/git-deploy-test/sshkey ]; then
+		ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/sshkey -q -N ""
+	fi
 }
 
 import_sshkey(){
@@ -58,9 +55,26 @@ import_sshkey(){
 			< /tmp/git-deploy-test/sshkey.pub
 }
 
+git(){
+	if [ ! -f /tmp/git-deploy-test/gitssh ]; then
+		cat <<- "EOF" > /tmp/git-deploy-test/gitssh
+			#!/bin/bash
+			exec /usr/bin/ssh \
+				-o UserKnownHostsFile=/dev/null \
+				-o StrictHostKeyChecking=no \
+				-i /tmp/git-deploy-test/sshkey $*
+		EOF
+		chmod +x /tmp/git-deploy-test/gitssh
+	fi
+	GIT_SSH="/tmp/git-deploy-test/gitssh" /usr/bin/git "$@"
+}
+
 clone_repo(){
-	GIT_SSH="/tmp/git-deploy-test/gitssh" \
-	git clone ssh://git@localhost:2222/git/${1}.git /tmp/git-deploy-test/$1
+	oldpwd=$(pwd)
+	cd
+	rm -rf /tmp/git-deploy-test/$1
+	git clone ssh://git@${DOCKER_HOST_IP}:2222/git/${1} /tmp/git-deploy-test/$1
+	cd $oldpwd
 }
 
 ssh_command(){
@@ -69,21 +83,19 @@ ssh_command(){
 		-i /tmp/git-deploy-test/sshkey \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
-		git@localhost \
+		git@${DOCKER_HOST_IP} \
 		$1
 }
 
 push_test_commit() {
 	local repo=${1-testrepo}
 	local file_name=${2-test}
-	if [ -d "/tmp/git-deploy-test/$1" ]; then
-		cd /tmp/git-deploy-test/$1
-		git reset --hard origin/master
-		date >> $file_name
-		git add .
-		git commit -m "test commit"
-		GIT_SSH="/tmp/git-deploy-test/gitssh" \
-		git push origin master
+	local repo_folder="/tmp/git-deploy-test/$1"
+	if [ -d "$repo_folder" ]; then
+		date >> $repo_folder/$file_name
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "test commit"
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
 	else
 		echo "/tmp/git-deploy-test/$1 does not exist"
 		exit 1
@@ -92,51 +104,16 @@ push_test_commit() {
 
 push_hook() {
 	local repo=${1-testrepo}
-	local hook_name=${2-test}
-	if [ -d "/tmp/git-deploy-test/$repo" ]; then
-		cd /tmp/git-deploy-test/$repo
-		git reset --hard origin/master
-		mkdir -p hooks
-		rm -rf hooks/*
-		case $hook_name in
-			pre-receive)
-				cat <<- "EOF" > hooks/pre-receive
-					#!/bin/bash
-
-					# exit if we see 'badfile' in the list of files
-					while read oldrev newrev refname; do
-						for file in $(git diff --name-only $oldrev..$newrev); do
-							[ $file != 'badfile' ] || exit 1
-						done
-					done
-				EOF
-				;;
-			update)
-				cat <<- "EOF" > hooks/update
-					#!/bin/bash
-
-					refname="$1"
-					oldrev="$2"
-					newrev="$3"
-
-					# exit if we see 'badfile' in the list of files
-					for file in $(git diff --name-only $oldrev..$newrev); do
-						[ $file != 'badfile' ] || exit 1
-					done
-				EOF
-				;;
-			post-commit)
-				cat <<- "EOF" > hooks/update
-					#!/bin/bash
-
-					echo post-commit success
-				EOF
-				;;
-		esac
-		git add .
-		git commit -m "add $hook_name hook"
-		GIT_SSH="/tmp/git-deploy-test/gitssh" \
-		git push origin master
+	local hook_file=${2-test}
+	local hook_name=$(basename $hook_file)
+	local hook_folder=$(dirname $hook_file)
+	local repo_folder="/tmp/git-deploy-test/$repo/"
+	if [ -d "$repo_folder" ]; then
+		mkdir -p $repo_folder/$hook_folder
+		cp $PWD/test/test-hooks/$hook_name $repo_folder/$hook_file
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "add $hook_name hook"
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
 	else
 		echo "/tmp/git-deploy-test/$repo does not exist"
 		exit 1

@@ -1,97 +1,117 @@
 load test_helper
 
-@test "Prepare environment" {
-	run prepare_environment
-	[ "$status" -eq 0 ]
+setup(){
+	mkdir -p /tmp/git-deploy-test
+	create_data_volume
 }
 
-@test "Build container" {
+teardown(){
+	rm -rf /tmp/git-deploy-test
+	destroy_data_volume
+	destroy_container
+}
+
+@test "Can build container" {
 	run build_container
 	[ "$status" -eq 0 ]
 }
 
-@test "Create data volume" {
+@test "Can backup and restore a repository" {
+	run_container
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	push_test_commit testrepo
 	destroy_container
-	destroy_data_volume
-	create_data_volume
-}
-
-@test "Run container" {
-	run run_container
-	[ "$status" -eq 0 ]
-}
-
-@test "Import ssh keys into container" {
-	run import_sshkey
-	[ "$status" -eq 0 ]
-}
-
-@test "Run backup" {
-	run ssh_command "backup"
-	[ "$status" -eq 0 ]
-}
-
-@test "Create a new repository" {
-	run ssh_command "mkrepo testrepo"
-	[ "$status" -eq 0 ]
-}
-
-@test "Destroy Container" {
-	run destroy_container
-	[ "$status" -eq 0 ]
-}
-
-@test "Restore Backup" {
-	run run_container
-	[ "$status" -eq 0 ]
-}
-
-@test "Clone repository" {
+	run_container
 	run clone_repo testrepo
 	[ "$status" -eq 0 ]
 }
 
-@test "Push commit to repository" {
-	run push_test_commit testrepo
-	[ "$status" -eq 0 ]
-}
-
-@test "Add pre-commit hook" {
-	run push_hook testrepo pre-receive
-	[ "$status" -eq 0 ]
-}
-
-@test "Pre-Commit hook can allow file" {
+@test "Internal pre-receive hook can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
-}
-
-@test "Pre-Commit hook can reject file" {
+	push_hook testrepo hooks/pre-receive
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
 }
 
-@test "Add update hook" {
-	run push_hook testrepo update
-	[ "$status" -eq 0 ]
-}
+@test "External pre-receive hook can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
 
-@test "Update hook can allow file" {
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo pre-receive
+
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
-}
 
-@test "Update hook can reject file" {
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
 }
 
-@test "Add post-commit hook" {
-	run push_hook testrepo post-commit
+@test "Internal update hook can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	push_hook testrepo hooks/update
+	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
 }
 
-@test "Post-Commit hook can echo text" {
+@test "External update hook can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo update
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
+@test "Internal post-receive hook can echo text" {
+	run_container
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	push_hook testrepo hooks/post-receive
 	run push_test_commit testrepo somefile
-	echo "${lines[19]}" | grep "post-commit success"
+	echo "${lines[5]}" | grep "post-receive success"
+}
+
+@test "External post-receive hook can echo text" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	push_hook testhookrepo post-receive
+	run push_test_commit testrepo somefile
+	echo "${lines[6]}" | grep "post-receive success"
 }
