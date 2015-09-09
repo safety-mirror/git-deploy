@@ -7,8 +7,12 @@ RUN apt-get update && \
     git \
     curl \
     jq \
-    python-pip
-RUN pip install awscli boto
+    python-pip \
+    python-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN pip install awscli boto virtualenv && \
+    rm -rf /tmp/* /var/tmp/*
 
 RUN useradd -m -d /git -s /usr/bin/git-shell git
 RUN usermod -p $(od -An -N20 -v -w20 -tx1 /dev/urandom | tr -d ' ') git

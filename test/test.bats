@@ -60,6 +60,21 @@ teardown(){
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
 }
+@test "External pre-receive hook can reject bad commit without priming" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	push_hook testhookrepo pre-receive
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
 
 @test "Internal update hook can reject bad commit" {
 	run_container
@@ -114,4 +129,28 @@ teardown(){
 	push_hook testhookrepo post-receive
 	run push_test_commit testrepo somefile
 	echo "${lines[6]}" | grep "post-receive success"
+}
+
+@test "Concurrent pre-receive hooks are sandboxed" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo pre-receive
+
+	# background push: slowfile will sleep for 5 seconds
+	push_test_commit testrepo slowfile &
+
+	# rejected while another pre-receive is firing
+	sleep 2
+	run push_test_commit testrepo slowfile
+	[ "$status" -eq 1 ]
+
+	# accepted after pre-receive completes
+	sleep 5
+	run push_test_commit testrepo slowfile
+	[ "$status" -eq 0 ]
 }

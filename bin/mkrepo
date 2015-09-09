@@ -17,7 +17,7 @@ git init
 git config --bool receive.denyCurrentBranch false
 
 # Populate new repos with a base 'proxy' hooks
-# This hooks will perform the following for every new push:
+# These hooks will perform the following for every new push:
 # 1. Update the working tree
 # 2. Run user-defined pre-receive/update hooks
 # 3. Run user-defined post-receive hook
@@ -42,7 +42,11 @@ cat <<- "EOF" > .git/hooks/pre-receive
 		hook_dir="hooks"
 	fi
 
-	[ ! -f "$hook_dir/pre-receive" ] || bash $hook_dir/pre-receive <&0
+	if [ -f "$hook_dir/pre-receive" ]; then
+		( flock -nx 201 || exit 1
+			bash $hook_dir/pre-receive <&0
+		) 201>pre_receive_lock
+	fi
 EOF
 cat <<- "EOF" > .git/hooks/update
 	#!/bin/bash
