@@ -61,6 +61,29 @@ teardown(){
 	[ "$status" -eq 1 ]
 }
 
+@test "External pre-receive hook in branch can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo somebranch pre-receive
+
+    set_config testrepo HOOK_REPO_REF somebranch
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
 @test "External pre-receive hook can reject bad commit without priming" {
 	run_container
 	ssh_command "mkrepo testhookrepo"
@@ -108,6 +131,29 @@ teardown(){
 	[ "$status" -eq 1 ]
 }
 
+@test "External update hook in branch can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo somebranch update
+
+    set_config testrepo HOOK_REPO_REF somebranch
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
 @test "Internal post-receive hook can echo text" {
 	run_container
 	ssh_command "mkrepo testrepo"
@@ -140,11 +186,8 @@ teardown(){
 	clone_repo testrepo
 	destroy_container
 	run_container /git/testhookrepo
-
 	push_hook testhookrepo somebranch post-receive
-
-    run set_config testrepo HOOK_REPO_REF somebranch
-	[ "$status" -eq 0 ]
+    set_config testrepo HOOK_REPO_REF somebranch
 
 	run push_test_commit testrepo somefile
 	echo "${lines[8]}" | grep "post-receive success"
