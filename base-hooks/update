@@ -1,0 +1,11 @@
+#!/bin/bash
+
+source ~/.profile
+
+if [ ! -z "$HOOK_REPO" ]; then
+	hook_dir="/git/hooks"
+else
+	hook_dir="../hooks"
+fi
+
+[ ! -f "$hook_dir/update" ] || bash $hook_dir/update $@
