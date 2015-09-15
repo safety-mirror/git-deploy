@@ -33,7 +33,7 @@ teardown(){
 	clone_repo testrepo
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
-	push_hook testrepo hooks/pre-receive
+	push_hook testrepo master hooks/pre-receive
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
 	run push_test_commit testrepo badfile
@@ -52,7 +52,7 @@ teardown(){
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
 
-	push_hook testhookrepo pre-receive
+	push_hook testhookrepo master pre-receive
 
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
@@ -60,6 +60,30 @@ teardown(){
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
 }
+
+@test "External pre-receive hook in branch can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo somebranch pre-receive
+
+    set_config testrepo HOOK_REPO_REF somebranch
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
 @test "External pre-receive hook can reject bad commit without priming" {
 	run_container
 	ssh_command "mkrepo testhookrepo"
@@ -69,18 +93,17 @@ teardown(){
 	destroy_container
 	run_container /git/testhookrepo
 
-	push_hook testhookrepo pre-receive
+	push_hook testhookrepo master pre-receive
 
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 1 ]
 }
 
-
 @test "Internal update hook can reject bad commit" {
 	run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-	push_hook testrepo hooks/update
+	push_hook testrepo master hooks/update
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
 	run push_test_commit testrepo badfile
@@ -99,7 +122,30 @@ teardown(){
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
 
-	push_hook testhookrepo update
+	push_hook testhookrepo master update
+
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+}
+
+@test "External update hook in branch can reject bad commit" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo somebranch update
+
+    set_config testrepo HOOK_REPO_REF somebranch
 
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
@@ -112,7 +158,7 @@ teardown(){
 	run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-	push_hook testrepo hooks/post-receive
+	push_hook testrepo master hooks/post-receive
 	run push_test_commit testrepo somefile
 	echo "${lines[5]}" | grep "post-receive success"
 }
@@ -126,9 +172,25 @@ teardown(){
 	destroy_container
 	run_container /git/testhookrepo
 
-	push_hook testhookrepo post-receive
+	push_hook testhookrepo master post-receive
 	run push_test_commit testrepo somefile
 	echo "${lines[6]}" | grep "post-receive success"
+}
+
+
+@test "External post-receive hook in branch can echo text" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo somebranch post-receive
+    set_config testrepo HOOK_REPO_REF somebranch
+
+	run push_test_commit testrepo somefile
+	echo "${lines[8]}" | grep "post-receive success"
 }
 
 @test "Concurrent pre-receive hooks are sandboxed" {
@@ -139,7 +201,7 @@ teardown(){
 	clone_repo testrepo
 	destroy_container
 	run_container /git/testhookrepo
-	push_hook testhookrepo pre-receive
+	push_hook testhookrepo master pre-receive
 
 	# background push: slowfile will sleep for 5 seconds
 	push_test_commit testrepo slowfile &

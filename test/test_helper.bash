@@ -87,6 +87,22 @@ ssh_command(){
 		$1
 }
 
+set_config() {
+	local repo=${1-testrepo}
+	local key=${2-foo}
+	local value=${3-bar}
+	local repo_folder="/tmp/git-deploy-test/$1"
+	if [ -d "$repo_folder" ]; then
+		echo "export $key=$value" >> $repo_folder/config.env
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "test commit"
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
+	else
+		echo "/tmp/git-deploy-test/$1 does not exist"
+		exit 1
+	fi
+}
+
 push_test_commit() {
 	local repo=${1-testrepo}
 	local file_name=${2-test}
@@ -104,16 +120,18 @@ push_test_commit() {
 
 push_hook() {
 	local repo=${1-testrepo}
-	local hook_file=${2-test}
+	local branch=${2-master}
+	local hook_file=${3-test}
 	local hook_name=$(basename $hook_file)
 	local hook_folder=$(dirname $hook_file)
 	local repo_folder="/tmp/git-deploy-test/$repo/"
 	if [ -d "$repo_folder" ]; then
 		mkdir -p $repo_folder/$hook_folder
 		cp $PWD/test/test-hooks/$hook_name $repo_folder/$hook_file
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder checkout -B $branch
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "add $hook_name hook"
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
+		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin $branch
 	else
 		echo "/tmp/git-deploy-test/$repo does not exist"
 		exit 1

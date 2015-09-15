@@ -30,23 +30,39 @@ cat <<- "EOF" > .git/hooks/pre-receive
 	cd ..
 	env -i git reset --hard
 
-	# Update/use hooks from external repo if configured
-	if [ ! -z "$HOOK_REPO" ]; then
-		hook_dir="/git/hooks"
-		if [ ! -d "$hook_dir" ]; then
-			mkdir -p $hook_dir
-			git clone $HOOK_REPO $hook_dir
+	while read oldrev newrev refname; do
+	
+		# source config.env from incoming HEAD if it exists
+		git ls-tree --name-only -r $newrev | grep -Fx config.env >> /dev/null
+		if [ $? -eq 0 ]; then
+			source <(git cat-file blob $newrev:config.env)
 		fi
-		git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
-	else
-		hook_dir="hooks"
-	fi
 
-	if [ -f "$hook_dir/pre-receive" ]; then
-		( flock -nx 201 || exit 1
-			bash $hook_dir/pre-receive <&0
-		) 201>pre_receive_lock
-	fi
+		# Update/use hooks from external repo if configured
+		if [ ! -z "$HOOK_REPO" ]; then
+			hook_dir="/git/hooks"
+			if [ ! -d "$hook_dir" ]; then
+				mkdir -p $hook_dir
+				git clone $HOOK_REPO $hook_dir
+			fi
+			if [ ! -z "$HOOK_REPO_REF" ]; then
+				git \
+					--git-dir="$hook_dir/.git" \
+					--work-tree="$hook_dir" \
+					checkout $HOOK_REPO_REF
+			fi
+			git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
+		else
+			hook_dir="hooks"
+		fi
+
+		if [ -f "$hook_dir/pre-receive" ]; then
+			( flock -nx 201 || exit 1
+				echo $oldrev $newrev $refname | bash $hook_dir/pre-receive 
+			) 201>pre_receive_lock
+		fi
+	
+	done
 EOF
 cat <<- "EOF" > .git/hooks/update
 	#!/bin/bash
