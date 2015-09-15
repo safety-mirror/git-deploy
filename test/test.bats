@@ -216,3 +216,84 @@ teardown(){
 	run push_test_commit testrepo slowfile
 	[ "$status" -eq 0 ]
 }
+
+@test "Generate application secret" {
+	run_container
+	push_test_app testrepo testapp
+
+	run ssh_command "secret testrepo testapp foo bar"
+	[ "$status" -eq 0 ]
+}
+
+@test "Generate application secret from stdin" {
+	run_container
+	push_test_app testrepo testapp
+
+	date | ssh_command "secret testrepo testapp foo"
+	[ "$?" -eq 0 ]
+}
+
+@test "Generate application secret - missing arguments" {
+	run_container
+	push_test_app testrepo testapp
+
+	run ssh_command "secret"
+	[ "$status" -ne 0 ]
+	run ssh_command "secret testrepo"
+	[ "$status" -ne 0 ]
+	run ssh_command "secret testrepo testapp"
+	[ "$status" -ne 0 ]
+}
+
+@test "Generate application secret - invalid environment" {
+	run_container
+
+	run ssh_command "secret testrepo testapp foo bar"
+	[ "$status" -ne 0 ]
+}
+
+@test "Generate application secret - invalid application" {
+	run_container
+	ssh_command "mkrepo testrepo"
+
+	run ssh_command "secret testrepo testapp foo bar"
+	[ "$status" -ne 0 ]
+}
+
+@test "Generate application secret multiple environments" {
+	run_container
+	push_test_app testrepo testapp
+	push_test_app otherrepo testapp
+
+	run ssh_command "secret testrepo testapp foo bar"
+	[ "$status" -eq 0 ]
+	run ssh_command "secret otherrepo testapp foo bar"
+	[ "$status" -eq 0 ]
+}
+
+@test "Roundtrip application secret" {
+	run_container
+	push_test_app testrepo testapp
+	run ssh_command "secret testrepo testapp foo bar"
+
+	start_etcd
+
+	# Store secret: foo=bar
+	echo ${lines[1]} | docker exec -i test-git-deploy-etcd etcdctl set /env/testapp/testrepo/FOO >/dev/null
+	# Store plaintext: foz=BaZ
+	docker exec -i test-git-deploy-etcd etcdctl set /env/testapp/testrepo/FOZ BaZ >/dev/null
+
+	extract_pgp_keys
+	build_decrypt_container
+	run docker run --rm \
+		--link test-git-deploy-etcd \
+		-e ENVIRONMENT=testrepo \
+		-e APP=testapp \
+		-e ETCDCTL_PEERS=http://test-git-deploy-etcd:4001 \
+		-v /tmp/git-deploy-test/keys/:/home/decrypt/keys/:ro \
+		-t test-git-deploy-decrypt
+
+	# Verify environment
+	echo ${lines[0]} | grep FOO=bar
+	echo ${lines[1]} | grep FOZ=BaZ
+}

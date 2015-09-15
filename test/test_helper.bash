@@ -29,6 +29,7 @@ run_container(){
 		-e PASSPHRASE=a_test_passphrase \
 		-e HOOK_REPO=$hook_repo \
 		--volumes-from test-git-deploy-data \
+		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \
 		-e "DEBUG=true" \
 		pebble/test-git-deploy &> /dev/null
@@ -38,7 +39,11 @@ run_container(){
 }
 
 destroy_container(){
-	docker rm -f test-git-deploy &> /dev/null || return 0
+	docker rm -f test-git-deploy{,-decrypt,-etcd} &> /dev/null || return 0
+}
+
+build_decrypt_container(){
+	docker build -t test-git-deploy-decrypt decrypt/
 }
 
 gen_sshkey(){
@@ -53,6 +58,13 @@ import_sshkey(){
 		-i test-git-deploy \
 		bash -c 'cat >> .ssh/authorized_keys' \
 			< /tmp/git-deploy-test/sshkey.pub
+}
+
+container_command(){
+	docker \
+		exec \
+		-i test-git-deploy \
+		$* <&0
 }
 
 git(){
@@ -108,14 +120,26 @@ push_test_commit() {
 	local file_name=${2-test}
 	local repo_folder="/tmp/git-deploy-test/$1"
 	if [ -d "$repo_folder" ]; then
-		date >> $repo_folder/$file_name
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "test commit"
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
+		file_dir=$(dirname ${file_name})
+		if [ -n "${file_dir}" ]; then
+			mkdir -p ${repo_folder}/${file_dir}
+		fi
+		date >> ${repo_folder}/${file_name}
+		git --git-dir=${repo_folder}/.git --work-tree=${repo_folder} add .
+		git --git-dir=${repo_folder}/.git --work-tree=${repo_folder} commit -m "test commit"
+		git --git-dir=${repo_folder}/.git --work-tree=${repo_folder} push origin master
 	else
 		echo "/tmp/git-deploy-test/$1 does not exist"
 		exit 1
 	fi
+}
+
+push_test_app() {
+	local repo=${1-testrepo}
+	local app_name=${2-testapp}
+	ssh_command "mkrepo ${repo}"
+	clone_repo ${repo}
+	push_test_commit ${repo} apps/${app_name}/somefile
 }
 
 push_hook() {
@@ -135,5 +159,29 @@ push_hook() {
 	else
 		echo "/tmp/git-deploy-test/$repo does not exist"
 		exit 1
+	fi
+}
+
+start_etcd() {
+	docker run -d --name test-git-deploy-etcd deis/test-etcd:latest  \
+		etcd --listen-client-urls http://0.0.0.0:4001 \
+			--advertise-client-urls http://test-git-deploy-etcd:4001
+	# Wait for sync:
+	sleep 2
+}
+
+extract_pgp_keys() {
+	local key_folder=${1-/tmp/git-deploy-test/keys}
+	mkdir -p ${key_folder}
+	container_command gpg --export-secret-keys app-testrepo-testapp > ${key_folder}/app-private.key
+	container_command gpg --export env-testrepo > ${key_folder}/env-public.key
+
+	if which docker-machine > /dev/null; then
+		# Forward keys to docker-machine host (for mounting as a volume)
+		DOCKER_MACHINE=$(docker-machine active)
+		docker-machine ssh ${DOCKER_MACHINE} -- mkdir -p ${key_folder}
+		for key in app-private.key env-public.key; do
+			cat ${key_folder}/${key} | docker-machine ssh ${DOCKER_MACHINE} -- cat \> ${key_folder}/${key}
+		done
 	fi
 }
