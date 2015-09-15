@@ -38,6 +38,7 @@ EXPOSE $PORT
 WORKDIR /git
 
 ADD bin /opt/git-deploy/bin/
+ADD base-hooks /opt/git-deploy/base-hooks/
 RUN mkdir git-shell-commands && ln -s /opt/git-deploy/bin/* git-shell-commands/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
