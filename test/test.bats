@@ -217,83 +217,64 @@ teardown(){
 	[ "$status" -eq 0 ]
 }
 
+@test "Generate encryption key" {
+	run_container
+
+	run ssh_command "genkey testkey"
+	[ "$status" -eq 0 ]
+}
+
+@test "Generate encryption key but key already exists" {
+	run_container
+
+	ssh_command "genkey testkey"
+	run ssh_command "genkey testkey"
+	[ "$status" -eq 1 ]
+	echo $output | grep -q "already exists"
+}
+
+@test "Generate encryption key without name" {
+	run_container
+
+	run ssh_command "genkey"
+	[ "$status" -eq 1 ]
+	echo $output | grep -q "Usage"
+}
+
 @test "Generate application secret" {
 	run_container
-	push_test_app testrepo testapp
+	ssh_command "genkey testkey"
 
-	run ssh_command "secret testrepo testapp foo bar"
+	run ssh_command "secret testkey foo"
 	[ "$status" -eq 0 ]
 }
 
 @test "Generate application secret from stdin" {
 	run_container
-	push_test_app testrepo testapp
+	ssh_command "genkey testkey"
 
-	date | ssh_command "secret testrepo testapp foo"
+	date | ssh_command "secret testkey"
 	[ "$?" -eq 0 ]
 }
 
-@test "Generate application secret - missing arguments" {
-	run_container
-	push_test_app testrepo testapp
-
-	run ssh_command "secret"
-	[ "$status" -ne 0 ]
-	run ssh_command "secret testrepo"
-	[ "$status" -ne 0 ]
-	run ssh_command "secret testrepo testapp"
-	[ "$status" -ne 0 ]
-}
-
-@test "Generate application secret - invalid environment" {
+@test "Generate application secret but key not created" {
 	run_container
 
-	run ssh_command "secret testrepo testapp foo bar"
-	[ "$status" -ne 0 ]
-}
-
-@test "Generate application secret - invalid application" {
-	run_container
-	ssh_command "mkrepo testrepo"
-
-	run ssh_command "secret testrepo testapp foo bar"
-	[ "$status" -ne 0 ]
-}
-
-@test "Generate application secret multiple environments" {
-	run_container
-	push_test_app testrepo testapp
-	push_test_app otherrepo testapp
-
-	run ssh_command "secret testrepo testapp foo bar"
-	[ "$status" -eq 0 ]
-	run ssh_command "secret otherrepo testapp foo bar"
-	[ "$status" -eq 0 ]
+	run ssh_command "secret testkey foo"
+	[ "$status" -eq 1 ]
+	echo $output | grep "not found"
 }
 
 @test "Roundtrip application secret" {
 	run_container
-	push_test_app testrepo testapp
-	run ssh_command "secret testrepo testapp foo bar"
+	ssh_command "genkey testkey"
 
-	start_etcd
+	run ssh_command "secret testkey FOO=bar"
 
-	# Store secret: foo=bar
-	echo ${lines[1]} | docker exec -i test-git-deploy-etcd etcdctl set /env/testapp/testrepo/FOO >/dev/null
-	# Store plaintext: foz=BaZ
-	docker exec -i test-git-deploy-etcd etcdctl set /env/testapp/testrepo/FOZ BaZ >/dev/null
+	# Reassemble PGP message and decrypt in container
+	DECRYPTED=$(echo "-----BEGIN PGP MESSAGE-----
 
-	extract_pgp_keys
-	build_decrypt_container
-	run docker run --rm \
-		--link test-git-deploy-etcd \
-		-e ENVIRONMENT=testrepo \
-		-e APP=testapp \
-		-e ETCDCTL_PEERS=http://test-git-deploy-etcd:4001 \
-		-v /tmp/git-deploy-test/keys/:/home/decrypt/keys/:ro \
-		-t test-git-deploy-decrypt
-
-	# Verify environment
-	echo ${lines[0]} | grep FOO=bar
-	echo ${lines[1]} | grep FOZ=BaZ
+${lines[1]}
+-----END PGP MESSAGE-----" | container_command gpg --decrypt)
+	echo $DECRYPTED | grep -q "FOO=bar"
 }
