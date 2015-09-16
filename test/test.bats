@@ -216,3 +216,65 @@ teardown(){
 	run push_test_commit testrepo slowfile
 	[ "$status" -eq 0 ]
 }
+
+@test "Generate encryption key" {
+	run_container
+
+	run ssh_command "genkey testkey"
+	[ "$status" -eq 0 ]
+}
+
+@test "Generate encryption key but key already exists" {
+	run_container
+
+	ssh_command "genkey testkey"
+	run ssh_command "genkey testkey"
+	[ "$status" -eq 1 ]
+	echo $output | grep -q "already exists"
+}
+
+@test "Generate encryption key without name" {
+	run_container
+
+	run ssh_command "genkey"
+	[ "$status" -eq 1 ]
+	echo $output | grep -q "Usage"
+}
+
+@test "Generate application secret" {
+	run_container
+	ssh_command "genkey testkey"
+
+	run ssh_command "secret testkey foo"
+	[ "$status" -eq 0 ]
+}
+
+@test "Generate application secret from stdin" {
+	run_container
+	ssh_command "genkey testkey"
+
+	date | ssh_command "secret testkey"
+	[ "$?" -eq 0 ]
+}
+
+@test "Generate application secret but key not created" {
+	run_container
+
+	run ssh_command "secret testkey foo"
+	[ "$status" -eq 1 ]
+	echo $output | grep "not found"
+}
+
+@test "Roundtrip application secret" {
+	run_container
+	ssh_command "genkey testkey"
+
+	run ssh_command "secret testkey FOO=bar"
+
+	# Reassemble PGP message and decrypt in container
+	DECRYPTED=$(echo "-----BEGIN PGP MESSAGE-----
+
+${lines[1]}
+-----END PGP MESSAGE-----" | container_command gpg --decrypt)
+	echo $DECRYPTED | grep -q "FOO=bar"
+}

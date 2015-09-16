@@ -8,7 +8,8 @@ RUN apt-get update && \
     curl \
     jq \
     python-pip \
-    python-dev && \
+    python-dev \
+    gnupg2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN pip install awscli boto virtualenv && \

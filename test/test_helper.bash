@@ -29,6 +29,7 @@ run_container(){
 		-e PASSPHRASE=a_test_passphrase \
 		-e HOOK_REPO=$hook_repo \
 		--volumes-from test-git-deploy-data \
+		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \
 		-e "DEBUG=true" \
 		pebble/test-git-deploy &> /dev/null
@@ -53,6 +54,13 @@ import_sshkey(){
 		-i test-git-deploy \
 		bash -c 'cat >> .ssh/authorized_keys' \
 			< /tmp/git-deploy-test/sshkey.pub
+}
+
+container_command(){
+	docker \
+		exec \
+		-i test-git-deploy \
+		$* <&0
 }
 
 git(){
@@ -108,10 +116,14 @@ push_test_commit() {
 	local file_name=${2-test}
 	local repo_folder="/tmp/git-deploy-test/$1"
 	if [ -d "$repo_folder" ]; then
-		date >> $repo_folder/$file_name
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "test commit"
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master
+		file_dir=$(dirname ${file_name})
+		if [ "${file_dir}" != "." ]; then
+			mkdir -p ${repo_folder}/${file_dir}
+		fi
+		date >> ${repo_folder}/${file_name}
+		git --git-dir=${repo_folder}/.git --work-tree=${repo_folder} add .
+		git --git-dir=${repo_folder}/.git --work-tree=${repo_folder} commit -m "test commit"
+		git --git-dir=${repo_folder}/.git --work-tree=${repo_folder} push origin master
 	else
 		echo "/tmp/git-deploy-test/$1 does not exist"
 		exit 1
