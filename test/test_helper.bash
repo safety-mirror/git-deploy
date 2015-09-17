@@ -28,6 +28,8 @@ run_container(){
 		-e DEST=file:///backup_volume \
 		-e PASSPHRASE=a_test_passphrase \
 		-e HOOK_REPO=$hook_repo \
+		-e DEPLOY_TIMEOUT_TERM=10s \
+		-e DEPLOY_TIMEOUT_KILL=12s \
 		--volumes-from test-git-deploy-data \
 		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \

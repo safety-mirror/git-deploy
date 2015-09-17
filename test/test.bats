@@ -217,6 +217,25 @@ teardown(){
 	[ "$status" -eq 0 ]
 }
 
+@test "Sandbox locks expire" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo master pre-receive
+
+	# The hook never finishes, but push times out
+	run push_test_commit testrepo stallfile
+	[ "$status" -eq 1 ]
+
+	# Subsequent pushes are not blocked
+	run push_test_commit testrepo goodfile
+	[ "$status" -eq 0 ]
+}
+
 @test "Generate encryption key" {
 	run_container
 

@@ -34,6 +34,9 @@ RUN chown -R git:git /backup_volume
 ENV PORT=2222
 ENV PATH=/git/bin:/git/git-shell-commands:/opt/git-deploy/bin:$PATH
 
+ENV DEPLOY_TIMEOUT_TERM=600s
+ENV DEPLOY_TIMEOUT_KILL=620s
+
 RUN echo "Git-Deploy Shell" > /etc/motd
 
 EXPOSE $PORT
