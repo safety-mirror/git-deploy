@@ -9,6 +9,10 @@ while read oldrev newrev refname; do
 		FILES=$(git diff --name-only $oldrev..$newrev)
 	fi
 
+	# Launch an ssh agent to be nasty
+	eval $(ssh-agent -s) 2>&1 > /dev/null
+	trap "kill ${SSH_AGENT_PID}" EXIT
+
 	for file in $FILES; do
 		[ $file != 'badfile' ] || exit 1
 		if [ "$file" == 'slowfile' ]; then
@@ -16,6 +20,11 @@ while read oldrev newrev refname; do
 			sleep 5
 			# pick up breadcrumb if it exists; fail if it was stolen (by a concurrent hook)
 			[ -f breadcrumb ] && rm -f breadcrumb || exit 1
+		fi
+		if [ "$file" == 'stallfile' ]; then
+			while [ true ]; do
+				sleep 5
+			done
 		fi
 	done
 done

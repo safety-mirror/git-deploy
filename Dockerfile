@@ -24,6 +24,8 @@ RUN echo "HostKey /git/.ssh/host_keys/ssh_host_rsa_key" >> /etc/ssh/sshd_config 
     echo "HostKey /git/.ssh/host_keys/ssh_host_ecdsa_key" >> /etc/ssh/sshd_config && \
     echo "HostKey /git/.ssh/host_keys/ssh_host_ed25519_key" >> /etc/ssh/sshd_config && \
     echo "PasswordAuthentication no" >> /etc/ssh/sshd_config && \
+    echo "ClientAliveInterval 30" >> /etc/ssh/sshd_config && \
+    echo "ClientAliveCountMax 3" >> /etc/ssh/sshd_config && \
     echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config
 
 RUN mkdir -p /backup_volume 
@@ -31,6 +33,9 @@ RUN chown -R git:git /backup_volume
 
 ENV PORT=2222
 ENV PATH=/git/bin:/git/git-shell-commands:/opt/git-deploy/bin:$PATH
+
+ENV DEPLOY_TIMEOUT_TERM=600s
+ENV DEPLOY_TIMEOUT_KILL=620s
 
 RUN echo "Git-Deploy Shell" > /etc/motd
 
