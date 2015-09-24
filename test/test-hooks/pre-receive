@@ -14,7 +14,10 @@ while read oldrev newrev refname; do
 	trap "kill ${SSH_AGENT_PID}" EXIT
 
 	for file in $FILES; do
-		[ $file != 'badfile' ] || exit 1
+		if [ "$file" == 'badfile' ]; then
+			echo "Rejecting badfile"
+			exit 1
+		fi
 		if [ "$file" == 'slowfile' ]; then
 			touch breadcrumb
 			sleep 5

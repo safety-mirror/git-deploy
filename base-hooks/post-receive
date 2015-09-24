@@ -1,9 +1,12 @@
 #!/bin/bash
+
 source ~/.profile
+set -o pipefail
+
 if [ ! -z "$HOOK_REPO" ]; then
 	hook_dir="/git/hooks"
 else
 	hook_dir="../hooks"
 fi
-[ ! -f "$hook_dir/post-receive" ] || bash $hook_dir/post-receive
+[ ! -f "$hook_dir/post-receive" ] || bash $hook_dir/post-receive | tee /var/log/git-deploy/hooks.log
 backup
