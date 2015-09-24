@@ -18,15 +18,9 @@ RUN pip install awscli boto virtualenv && \
 RUN useradd -m -d /git -s /usr/bin/git-shell git
 RUN usermod -p $(od -An -N20 -v -w20 -tx1 /dev/urandom | tr -d ' ') git
 
-RUN mkdir -p /var/run/sshd
-RUN echo "HostKey /git/.ssh/host_keys/ssh_host_rsa_key" >> /etc/ssh/sshd_config && \
-    echo "HostKey /git/.ssh/host_keys/ssh_host_dsa_key" >> /etc/ssh/sshd_config && \
-    echo "HostKey /git/.ssh/host_keys/ssh_host_ecdsa_key" >> /etc/ssh/sshd_config && \
-    echo "HostKey /git/.ssh/host_keys/ssh_host_ed25519_key" >> /etc/ssh/sshd_config && \
-    echo "PasswordAuthentication no" >> /etc/ssh/sshd_config && \
-    echo "ClientAliveInterval 30" >> /etc/ssh/sshd_config && \
-    echo "ClientAliveCountMax 3" >> /etc/ssh/sshd_config && \
-    echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config
+RUN mkdir -p /var/run/sshd /var/log/git-deploy && \
+    chown git /var/run/sshd /var/log/git-deploy
+ADD sshd_config /etc/ssh/sshd_config
 
 RUN mkdir -p /backup_volume 
 RUN chown -R git:git /backup_volume

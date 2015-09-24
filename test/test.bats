@@ -297,3 +297,44 @@ ${lines[1]}
 -----END PGP MESSAGE-----" | container_command gpg --decrypt)
 	echo $DECRYPTED | grep -q "FOO=bar"
 }
+
+@test "Log authentication failure" {
+	run_container
+
+	# Generate a key that won't work, try to use it:
+	ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/badkey -q -N ""
+	run ssh \
+		-p2222 \
+		-i /tmp/git-deploy-test/badkey \
+		-o UserKnownHostsFile=/dev/null \
+		-o StrictHostKeyChecking=no \
+		git@${DOCKER_HOST_IP}
+
+	run docker logs test-git-deploy
+	echo ${output} | grep -q "Failed publickey for git"
+}
+
+@test "Log authentication success" {
+	run_container
+	ssh_command "mkrepo testrepo"
+
+	run docker logs test-git-deploy
+
+	echo ${output} | grep -q "Accepted publickey for git"
+}
+
+@test "Log messages from hook" {
+	run_container
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	push_hook testrepo master hooks/pre-receive
+	push_test_commit testrepo goodfile
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 1 ]
+	echo ${output} | grep -q "Rejecting badfile"
+	sleep 1
+
+	# Confirm stdout from the hook is captures:
+	run docker logs test-git-deploy
+	echo ${output} | grep -q "Rejecting badfile"
+}

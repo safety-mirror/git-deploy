@@ -1,0 +1,39 @@
+Protocol 2
+
+KeyRegenerationInterval 3600
+ServerKeyBits 1024
+
+SyslogFacility AUTH
+LogLevel INFO
+
+LoginGraceTime 120
+PermitRootLogin no
+StrictModes yes
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+
+X11Forwarding no
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+
+AcceptEnv LANG LC_*
+
+UsePAM yes
+HostKey /git/.ssh/host_keys/ssh_host_rsa_key
+HostKey /git/.ssh/host_keys/ssh_host_dsa_key
+HostKey /git/.ssh/host_keys/ssh_host_ecdsa_key
+HostKey /git/.ssh/host_keys/ssh_host_ed25519_key
+PasswordAuthentication no
+ClientAliveInterval 30
+ClientAliveCountMax 3
+UsePrivilegeSeparation no
+
+PidFile /var/run/sshd/sshd.pid

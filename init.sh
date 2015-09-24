@@ -20,8 +20,12 @@ fi
 
 rm /git/.profile
 for LINE in `env`; do
-    echo "export $LINE" >> ~/.profile;
+    echo "export $LINE" >> /git/.profile;
 done
 
+# Run tail until parent pid (bash) dies, reading from fifo
+mkfifo /var/log/git-deploy/hooks.log
+tail --pid $$ -F /var/log/git-deploy/hooks.log &
+
 echo "Starting Git-Deploy on port $PORT"
-/usr/sbin/sshd -D -p $PORT
+/usr/sbin/sshd -D -e -p $PORT

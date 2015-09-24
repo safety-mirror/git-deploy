@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source ~/.profile
+set -o pipefail
 
 if [ ! -z "$HOOK_REPO" ]; then
 	hook_dir="/git/hooks"
@@ -8,4 +9,4 @@ else
 	hook_dir="../hooks"
 fi
 
-[ ! -f "$hook_dir/update" ] || bash $hook_dir/update $@
+[ ! -f "$hook_dir/update" ] || bash $hook_dir/update $@ | tee /var/log/git-deploy/hooks.log
