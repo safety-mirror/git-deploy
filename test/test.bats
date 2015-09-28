@@ -311,7 +311,7 @@ ${lines[1]}
 		git@${DOCKER_HOST_IP}
 
 	run docker logs test-git-deploy
-	echo ${output} | grep -q "Failed publickey for git"
+	echo ${output} | grep -q "Connection closed by"
 }
 
 @test "Log authentication success" {

@@ -23,9 +23,9 @@ for LINE in `env`; do
     echo "export $LINE" >> /git/.profile;
 done
 
-# Run tail until parent pid (bash) dies, reading from fifo
+# Loop reads, reading from fifo
 mkfifo /var/log/git-deploy/hooks.log
-tail --pid $$ -F /var/log/git-deploy/hooks.log &
+while cat /var/log/git-deploy/hooks.log; do :; done &
 
 echo "Starting Git-Deploy on port $PORT"
 /usr/sbin/sshd -D -e -p $PORT
