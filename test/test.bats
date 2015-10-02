@@ -334,7 +334,8 @@ ${lines[1]}
 	echo ${output} | grep -q "Rejecting badfile"
 	sleep 1
 
-	# Confirm stdout from the hook is captures:
+	# Confirm stderr and stdout from the hook are captured:
 	run docker logs test-git-deploy
+	echo ${output} | grep -q "Accepting goodfile"
 	echo ${output} | grep -q "Rejecting badfile"
 }

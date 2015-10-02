@@ -15,7 +15,7 @@ while read oldrev newrev refname; do
 
 	for file in $FILES; do
 		if [ "$file" == 'badfile' ]; then
-			echo "Rejecting badfile"
+			>&2 echo "Rejecting badfile"
 			exit 1
 		fi
 		if [ "$file" == 'slowfile' ]; then
@@ -29,5 +29,6 @@ while read oldrev newrev refname; do
 				sleep 5
 			done
 		fi
+		echo "Accepting ${file}"
 	done
 done
