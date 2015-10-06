@@ -36,7 +36,7 @@ while read oldrev newrev refname; do
 	if [ -f "$hook_dir/pre-receive" ]; then
 		( flock -nx 201 || exit 1
 			echo $oldrev $newrev $refname \
-				| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive \
+				| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive 2>&1 \
 				| tee /var/log/git-deploy/hooks.log
 		) 201>pre_receive_lock
 	fi
