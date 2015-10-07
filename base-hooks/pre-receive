@@ -34,7 +34,11 @@ while read oldrev newrev refname; do
 	fi
 
 	if [ -f "$hook_dir/pre-receive" ]; then
-		( flock -nx 201 || exit 1
+		(
+			if ! flock -nx 201; then
+				echo "Unable to acquire local deploy lock, another git push is in progress"
+				exit 1
+			fi
 			echo $oldrev $newrev $refname \
 				| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive 2>&1 \
 				| tee /var/log/git-deploy/hooks.log
