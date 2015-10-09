@@ -209,6 +209,7 @@ teardown(){
 	# rejected while another pre-receive is firing
 	sleep 2
 	run push_test_commit testrepo slowfile
+	echo $output | grep -i "another git push is in progress"
 	[ "$status" -eq 1 ]
 
 	# accepted after pre-receive completes
