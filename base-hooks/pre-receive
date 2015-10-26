@@ -39,9 +39,15 @@ while read oldrev newrev refname; do
 				echo "Unable to acquire local deploy lock, another git push is in progress"
 				exit 1
 			fi
-			echo $oldrev $newrev $refname \
-				| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive 2>&1 \
-				| tee /var/log/git-deploy/hooks.log
+
+			if [ "${CAPTURE_OUTPUT}" == "true" ]; then
+				echo $oldrev $newrev $refname \
+					| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive 2>&1 \
+					| tee /var/log/git-deploy/hooks.log
+			else
+				echo $oldrev $newrev $refname \
+					| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive
+			fi
 		) 201>pre_receive_lock
 	fi
 

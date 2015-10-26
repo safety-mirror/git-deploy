@@ -30,6 +30,7 @@ ENV PATH=/git/bin:/git/git-shell-commands:/opt/git-deploy/bin:$PATH
 
 ENV DEPLOY_TIMEOUT_TERM=600s
 ENV DEPLOY_TIMEOUT_KILL=620s
+ENV CAPTURE_OUTPUT=true
 
 RUN echo "Git-Deploy Shell" > /etc/motd
 
