@@ -40,6 +40,15 @@ teardown(){
 	[ "$status" -eq 1 ]
 }
 
+@test "Internal pre-receive hook ignored if HOOK_REPO is defined" {
+	run_container /git/testhookrepo
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	push_hook testrepo master hooks/pre-receive
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
+}
+
 @test "External pre-receive hook can reject bad commit" {
 	run_container
 	ssh_command "mkrepo testhookrepo"
