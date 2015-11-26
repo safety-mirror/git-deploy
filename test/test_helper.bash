@@ -22,26 +22,42 @@ build_container(){
 
 run_container(){
 	local hook_repo=${1-}
+	local hook_repo_keys=${2}
+	if [ -z "$hook_repo_keys" ]; then
+		HOOK_REPO_VERIFY=false
+	else
+		HOOK_REPO_VERIFY=true
+	fi
 	docker run \
 		-d \
 		--name test-git-deploy \
 		-e DEST=file:///backup_volume \
 		-e PASSPHRASE=a_test_passphrase \
 		-e HOOK_REPO=$hook_repo \
+		-e HOOK_REPO_VERIFY=$HOOK_REPO_VERIFY \
 		-e DEPLOY_TIMEOUT_TERM=10s \
 		-e DEPLOY_TIMEOUT_KILL=12s \
 		--volumes-from test-git-deploy-data \
 		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \
 		-e "DEBUG=true" \
-		pebble/test-git-deploy &> /dev/null
+		pebble/test-git-deploy
+		#pebble/test-git-deploy &> /dev/null
 	sleep 5
 	gen_sshkey
 	import_sshkey
+	for key_id in $hook_repo_keys; do
+		import_gpgkey $key_id
+	done	
 }
 
 destroy_container(){
 	docker rm -f test-git-deploy &> /dev/null || return 0
+}
+
+make_hook_repo(){
+	local hook_repo=${1-testhookrepo}
+	docker exec test-git-deploy bash -c "git init --bare $hook_repo"
 }
 
 gen_sshkey(){
@@ -56,6 +72,20 @@ import_sshkey(){
 		-i test-git-deploy \
 		bash -c 'cat >> .ssh/authorized_keys' \
 			< /tmp/git-deploy-test/sshkey.pub
+}
+
+import_gpgkey(){
+	local key_id=${1-}
+	docker \
+		exec \
+		-i test-git-deploy \
+		bash -c 'cat | gpg --import' \
+			< ${PWD}/test/test-keys/${key_id}.key
+	docker \
+		exec \
+		-i test-git-deploy \
+		bash -c 'cat >> /tmp/trustfile; gpg --import-ownertrust /tmp/trustfile' \
+			< ${PWD}/test/test-keys/${key_id}.key.trust
 }
 
 container_command(){
@@ -136,6 +166,7 @@ push_hook() {
 	local repo=${1-testrepo}
 	local branch=${2-master}
 	local hook_file=${3-test}
+	local sign_key=${4}
 	local hook_name=$(basename $hook_file)
 	local hook_folder=$(dirname $hook_file)
 	local repo_folder="/tmp/git-deploy-test/$repo/"
@@ -144,7 +175,22 @@ push_hook() {
 		cp $PWD/test/test-hooks/$hook_name $repo_folder/$hook_file
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder checkout -B $branch
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
-		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "add $hook_name hook"
+		if [[ ! -z "$sign_key" ]]; then
+			export GNUPGHOME="/tmp/git-deploy-test/gpg"
+			rm -rf $GNUPGHOME
+			mkdir -p $GNUPGHOME
+			echo gpg --import test/test-keys/${sign_key}.key
+			gpg --import test/test-keys/${sign_key}.key
+			git \
+				--git-dir=${repo_folder}/.git \
+				--work-tree=${repo_folder} \
+					commit \
+						-m "add $hook_name hook" \
+						--gpg-sign=${sign_key}
+			unset GNUPGHOME
+		else
+			git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "add $hook_name hook"
+		fi
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin $branch
 	else
 		echo "/tmp/git-deploy-test/$repo does not exist"

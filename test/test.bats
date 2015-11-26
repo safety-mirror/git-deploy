@@ -27,6 +27,29 @@ teardown(){
 	[ "$status" -eq 0 ]
 }
 
+@test "Reject if HOOK_REPO_VERIFY and no known signature on HOOK_REPO" {
+
+	run_container
+	make_hook_repo testhookrepo
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo "94F94EC1"
+
+	push_hook testhookrepo master hooks/pre-receive 94F94EC1 
+	run push_test_commit testrepo
+	[ "$status" -eq 0 ]
+
+	push_hook testhookrepo master hooks/update
+	run push_test_commit testrepo
+	[ "$status" -eq 1 ]
+
+	push_hook testhookrepo master hooks/post-receive 9BE4FBEC 
+	run push_test_commit testrepo
+	[ "$status" -eq 1 ]
+}
+
 @test "Internal pre-receive hook can reject bad commit" {
 	run_container
 	ssh_command "mkrepo testrepo"

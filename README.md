@@ -11,10 +11,27 @@ services, server provisioning, etc.
 
 ## Setup ##
 
-1. Run git-deploy Docker image on CI server.
+1. Configure environment file
 
     ```bash
     cp git-deploy/sample.env git-deploy.env
+    vim git-deploy.env
+    ```
+
+    Option legend:
+
+    Key                   | Usage
+    --------------------- | ---------------------------------------------------
+    DEST                  | Duplicity backup destination. See [Duplicity Docs](http://linux.die.net/man/1/duplicity)
+    PASSPHRASE            | Used to symmetrically decrypt/encrypt backups via GPG
+    HOOK_REPO             | External Git repository where hooks will be sourced from. If undefined hooks will be sourced from 'hooks' folder in each repo
+    HOOK_REPO_VERIFY      | If 'true' hook_repo must be signed by key trusted in local gpg keyring
+    AWS_ACCESS_KEY_ID     | Required if using AWS S3 as DEST
+    AWS_SECRET_ACCESS_KEY | ^
+
+2. Run git-deploy Docker image on CI server.
+
+    ```bash
     cp git-deploy/git-deploy.service .
     systemctl enable $PWD/git-deploy.service
     systemctl start git-deploy
@@ -22,11 +39,21 @@ services, server provisioning, etc.
 
 3. Add any desired public keys
 
+  SSH:
     ```bash
     docker exec -it git-deploy sh -c "curl https://github.com/someuser.keys >> .ssh/authorized_keys"
-   ```
+    ```
 
-2. Setup Git-Deploy repo for each environment this deploy server can manage.
+  GPG:
+    ```bash
+    docker exec -it git-deploy bash
+    gpg --recv-keys E90A401336C8AAA9
+    gpg --edit-key E90A401336C8AAA9
+    gpg> trust
+    gpg> save
+    ```
+
+4. Setup Git-Deploy repo for each environment this deploy server can manage.
 
     ```bash
     ssh git@ci.someserver.com mkrepo staging
