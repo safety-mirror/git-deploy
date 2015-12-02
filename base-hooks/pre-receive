@@ -29,6 +29,13 @@ while read oldrev newrev refname; do
 				checkout $HOOK_REPO_REF
 		fi
 		git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
+		if [ "$HOOK_REPO_VERIFY" = true ]; then
+			sign_status=$( git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
+			if [ "$sign_status" != "G" ]; then
+				echo "Latest commit in $HOOK_REPO is not signed by a known key"
+				exit 1
+			fi
+		fi
 	else
 		hook_dir="hooks"
 	fi
