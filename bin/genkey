@@ -50,4 +50,4 @@ Expire-Date: 0
 ensure_key git-deploy sign
 ensure_key ${KEY_NAME} encrypt true
 
-git-shell-commands/post-generate-key ${KEY_NAME}
+git-shell-hooks/post-generate-key ${KEY_NAME}
