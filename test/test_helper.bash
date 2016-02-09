@@ -40,7 +40,6 @@ run_container(){
 		--volumes-from test-git-deploy-data \
 		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \
-		-e "DEBUG=true" \
 		pebble/test-git-deploy
 		#pebble/test-git-deploy &> /dev/null
 	sleep 5
