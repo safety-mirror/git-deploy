@@ -37,7 +37,7 @@ teardown(){
 	destroy_container
 	run_container /git/testhookrepo "94F94EC1"
 
-	push_hook testhookrepo master hooks/pre-receive 94F94EC1 
+	push_hook testhookrepo master hooks/pre-receive 94F94EC1
 	run push_test_commit testrepo
 	[ "$status" -eq 0 ]
 
@@ -45,7 +45,7 @@ teardown(){
 	run push_test_commit testrepo
 	[ "$status" -eq 1 ]
 
-	push_hook testhookrepo master hooks/post-receive 9BE4FBEC 
+	push_hook testhookrepo master hooks/post-receive 9BE4FBEC
 	run push_test_commit testrepo
 	[ "$status" -eq 1 ]
 }
@@ -291,6 +291,26 @@ teardown(){
 	run ssh_command "genkey"
 	[ "$status" -eq 1 ]
 	echo $output | grep -q "Usage"
+}
+
+@test "Generate encryption key callback" {
+	run_container
+
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo somebranch post-generate-key
+	set_config testrepo HOOK_REPO_REF somebranch
+
+	# Commit a file to prime the hook repo
+	run push_test_commit testrepo somefile
+
+	run ssh_command "genkey testkey"
+	[ "$status" -eq 0 ]
+	echo $output | grep -q "post-generate-key success"
 }
 
 @test "Generate application secret" {
