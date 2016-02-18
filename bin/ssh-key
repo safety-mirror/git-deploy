@@ -1,0 +1,11 @@
+#!/bin/bash
+
+USERNAME=$1
+PUBLIC_KEY=$2
+
+if [ ! -d "~/.ssh/authorized_keys.d/" ]; then
+    mkdir ~/.ssh/authorized_keys.d/
+fi
+
+echo 'command="USER=${USERNAME} /usr/bin/git-shell" ${PUBLIC_KEY}\n' \
+    >> ~/.ssh/authorized_keys.d/$USERNAME.pub
