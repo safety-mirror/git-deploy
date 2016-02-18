@@ -3,6 +3,12 @@
 USERNAME=$1
 PUBLIC_KEY=$2
 
+./test-authorized-keys $PUBLIC_KEY
+if [ $? ]; then
+    echo "ssh key not valid"
+    exit 1
+fi
+
 if [ ! -d "~/.ssh/authorized_keys.d/" ]; then
     mkdir ~/.ssh/authorized_keys.d/
 fi
