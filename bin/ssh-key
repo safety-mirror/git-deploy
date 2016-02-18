@@ -3,7 +3,7 @@
 USERNAME=$1
 PUBLIC_KEY=$2
 
-./test-key $PUBLIC_KEY
+./ssh-check-key $PUBLIC_KEY
 if [ $? ]; then
     echo "ssh key not valid"
     exit 1
