@@ -1,17 +1,20 @@
 #!/bin/bash
 
 USERNAME=$1
-PUBLIC_KEY=$2
+PUBKEY="$2 $3 $4"
 
-./ssh-check-key $PUBLIC_KEY
-if [ $? ]; then
+git-shell-commands/ssh-check-key $PUBKEY
+if [ $? -eq 1 ]; then
     echo "ssh key not valid"
-    exit 1
+    exit $USERNAME
 fi
 
-if [ ! -d "~/.ssh/authorized_keys.d/" ]; then
-    mkdir ~/.ssh/authorized_keys.d/
-fi
+mkdir -p .ssh/authorized_keys.d/
 
-echo 'command="USER=${USERNAME} /usr/bin/git-shell" ${PUBLIC_KEY}\n' \
-    >> ~/.ssh/authorized_keys.d/$USERNAME.pub
+touch .ssh/authorized_keys.d/${USERNAME}.pub
+
+echo "command=\"ssh-check-key bananas\" ${PUBKEY}" \
+    >> .ssh/authorized_keys.d/${USERNAME}.pub
+
+#Turns out authorized_keys.d is just a thing people do apparently
+cat .ssh/authorized_keys.d/* > .ssh/authorized_keys
