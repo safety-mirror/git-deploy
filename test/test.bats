@@ -17,7 +17,7 @@ teardown(){
 }
 
 @test "Can backup and restore a repository" {
-	run_container
+       run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_test_commit testrepo
@@ -28,8 +28,7 @@ teardown(){
 }
 
 @test "Reject if HOOK_REPO_VERIFY and no known signature on HOOK_REPO" {
-
-	run_container
+       run_container
 	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -51,7 +50,7 @@ teardown(){
 }
 
 @test "Internal pre-receive hook can reject bad commit" {
-	run_container
+       run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	run push_test_commit testrepo goodfile
@@ -64,7 +63,7 @@ teardown(){
 }
 
 @test "Internal pre-receive hook ignored if HOOK_REPO is defined" {
-	run_container /git/testhookrepo
+       run_container /git/testhookrepo
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testrepo master hooks/pre-receive
@@ -73,7 +72,7 @@ teardown(){
 }
 
 @test "External pre-receive hook can reject bad commit" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -94,7 +93,7 @@ teardown(){
 }
 
 @test "External pre-receive hook in branch can reject bad commit" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -117,7 +116,7 @@ teardown(){
 }
 
 @test "External pre-receive hook can reject bad commit without priming" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -132,7 +131,7 @@ teardown(){
 }
 
 @test "Internal update hook can reject bad commit" {
-	run_container
+       run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testrepo master hooks/update
@@ -143,7 +142,7 @@ teardown(){
 }
 
 @test "External update hook can reject bad commit" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -164,7 +163,7 @@ teardown(){
 }
 
 @test "External update hook in branch can reject bad commit" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -187,7 +186,7 @@ teardown(){
 }
 
 @test "Internal post-receive hook can echo text" {
-	run_container
+       run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testrepo master hooks/post-receive
@@ -196,7 +195,7 @@ teardown(){
 }
 
 @test "External post-receive hook can echo text" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -211,7 +210,7 @@ teardown(){
 
 
 @test "External post-receive hook in branch can echo text" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -226,7 +225,7 @@ teardown(){
 }
 
 @test "Concurrent pre-receive hooks are sandboxed" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -251,7 +250,7 @@ teardown(){
 }
 
 @test "Sandbox locks expire" {
-	run_container
+       run_container
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo
@@ -270,14 +269,14 @@ teardown(){
 }
 
 @test "Generate encryption key" {
-	run_container
+       run_container
 
 	run ssh_command "genkey testkey"
 	[ "$status" -eq 0 ]
 }
 
 @test "Generate encryption key but key already exists" {
-	run_container
+       run_container
 
 	ssh_command "genkey testkey"
 	run ssh_command "genkey testkey"
@@ -286,7 +285,7 @@ teardown(){
 }
 
 @test "Generate encryption key without name" {
-	run_container
+       run_container
 
 	run ssh_command "genkey"
 	[ "$status" -eq 1 ]
@@ -294,7 +293,7 @@ teardown(){
 }
 
 @test "Generate encryption key callback" {
-	run_container
+       run_container
 
 	ssh_command "mkrepo testhookrepo"
 	ssh_command "mkrepo testrepo"
@@ -314,7 +313,7 @@ teardown(){
 }
 
 @test "Generate application secret" {
-	run_container
+       run_container
 	ssh_command "genkey testkey"
 
 	run ssh_command "secret testkey foo"
@@ -322,7 +321,7 @@ teardown(){
 }
 
 @test "Generate application secret from stdin" {
-	run_container
+       run_container
 	ssh_command "genkey testkey"
 
 	date | ssh_command "secret testkey"
@@ -330,7 +329,7 @@ teardown(){
 }
 
 @test "Generate application secret but key not created" {
-	run_container
+       run_container
 
 	run ssh_command "secret testkey foo"
 	[ "$status" -eq 1 ]
@@ -338,7 +337,7 @@ teardown(){
 }
 
 @test "Roundtrip application secret" {
-	run_container
+       run_container
 	ssh_command "genkey testkey"
 
 	run ssh_command "secret testkey FOO=bar"
@@ -352,7 +351,7 @@ ${lines[1]}
 }
 
 @test "Log authentication failure" {
-	run_container
+       run_container
 
 	# Generate a key that won't work, try to use it:
 	ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/badkey -q -N ""
@@ -368,7 +367,7 @@ ${lines[1]}
 }
 
 @test "Log authentication success" {
-	run_container
+       run_container
 	ssh_command "mkrepo testrepo"
 
 	run docker logs test-git-deploy
@@ -377,7 +376,7 @@ ${lines[1]}
 }
 
 @test "Log messages from hook" {
-	run_container
+       run_container
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testrepo master hooks/pre-receive
@@ -391,4 +390,45 @@ ${lines[1]}
 	run docker logs test-git-deploy
 	echo ${output} | grep -q "Accepting goodfile"
 	echo ${output} | grep -q "Rejecting badfile"
+}
+
+@test "ssh key validation works for a real key" {
+        run_container
+        key=$(cat /tmp/git-deploy-test/sshkey.pub)
+        command="ssh-check-key ${key}"
+        run ssh_command $command
+        [ $status -eq 0 ]
+}
+
+@test "ssh key validation fails with a bad key" {
+        run_container
+        key=$(cat /tmp/git-deploy-test/sshkey.pub | cut -b 512-)
+        command="ssh-check-key '${key}'"
+        ssh_command $command
+        [ -z $status ]
+}
+
+@test "Adding an ssh key for a user" {
+        run_container
+        key=$(cat /tmp/git-deploy-test/sshkey.pub)
+        command="ssh-key testuser ${key}"
+        ssh_command "$command"
+        [ -z $status ]
+        container_command "[ -f .ssh/authorized_keys.d/testuser.pub ]"
+        [ -z $status ]
+}
+
+@test "Added keys can be used for login successfully" {
+        gen_sshkey testuser2
+        key=$(cat /tmp/git-deploy-test/testuser2.pub)
+        command="ssh-key testuser2 ${key}"
+
+        run_container
+        ssh_command "$command"
+        [ -z $status ]
+
+	ssh -v -p2222 -i /tmp/git-deploy-test/testuser2 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no git@${DOCKER_HOST_IP}
+
+        [ -z $status ]
+        echo ${output}
 }
