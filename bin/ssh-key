@@ -13,7 +13,7 @@ mkdir -p .ssh/authorized_keys.d/
 
 touch .ssh/authorized_keys.d/${USERNAME}.pub
 
-echo "command=\"ssh-check-key bananas\" ${PUBKEY}" \
+echo "command=\"login ${USERNAME}\" ${PUBKEY}" \
     >> .ssh/authorized_keys.d/${USERNAME}.pub
 
 #Turns out authorized_keys.d is just a thing people do apparently
