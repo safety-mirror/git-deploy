@@ -60,8 +60,10 @@ make_hook_repo(){
 }
 
 gen_sshkey(){
-	if [ ! -f /tmp/git-deploy-test/sshkey ]; then
-		ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/sshkey -q -N ""
+        OUT=$1
+        [ -z $OUT ] && OUT=sshkey
+	if [ ! -f /tmp/git-deploy-test/$OUT ]; then
+		ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/$OUT -q -N ""
 	fi
 }
 
