@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Welcome to ORBIT, $1!"
+echo "Welcome, $1!"
 
 export USER=$1
 
