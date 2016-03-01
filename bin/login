@@ -2,7 +2,7 @@
 
 echo "Welcome, $1!"
 
-export USER=$1
+export CURRENT_USER=$1
 
 args=("${@[@]:1}")
 $args
