@@ -11,10 +11,13 @@ fi
 
 mkdir -p .ssh/authorized_keys.d/
 
-touch .ssh/authorized_keys.d/${USERNAME}.pub
+KEYFILE=".ssh/authorized_keys.d/${USERNAME}.pub"
 
 echo "command=\"login ${USERNAME}\" ${PUBKEY}" \
-    >> .ssh/authorized_keys.d/${USERNAME}.pub
+    >> ${KEYFILE}
 
 #Turns out authorized_keys.d is just a thing people do apparently
 cat .ssh/authorized_keys.d/* > .ssh/authorized_keys
+git-shell-commands/update-ssh-keys -a ${USERNAME} <(${KEYFILE})
+
+backup
