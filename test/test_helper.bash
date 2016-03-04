@@ -1,9 +1,3 @@
-if which docker-machine > /dev/null; then
-	export DOCKER_HOST_IP=$(docker-machine ip `docker-machine active`)
-else
-	export DOCKER_HOST_IP="localhost"
-fi
-
 destroy_data_volume(){
 	docker rm -f test-git-deploy-data  &> /dev/null || return 0
 }
