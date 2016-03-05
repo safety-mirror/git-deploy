@@ -28,7 +28,6 @@ teardown(){
 }
 
 @test "Reject if HOOK_REPO_VERIFY and no known signature on HOOK_REPO" {
-
 	run_container
 	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
@@ -391,4 +390,45 @@ ${lines[1]}
 	run docker logs test-git-deploy
 	echo ${output} | grep -q "Accepting goodfile"
 	echo ${output} | grep -q "Rejecting badfile"
+}
+
+@test "ssh key validation works for a real key" {
+	 run_container
+	 key=$(cat /tmp/git-deploy-test/sshkey.pub)
+	 command="ssh-check-key ${key}"
+	 run ssh_command $command
+	 [ $status -eq 0 ]
+}
+
+@test "ssh key validation fails with a bad key" {
+	 run_container
+	 key=$(cat /tmp/git-deploy-test/sshkey.pub | cut -b 512-)
+	 command="ssh-check-key '${key}'"
+	 ssh_command $command
+	 [ -z $status ]
+}
+
+@test "Adding an ssh key for a user" {
+	 run_container
+	 key=$(cat /tmp/git-deploy-test/sshkey.pub)
+	 command="ssh-key testuser ${key}"
+	 ssh_command "$command"
+	 [ -z $status ]
+	 container_command "[ -f .ssh/authorized_keys.d/testuser.pub ]"
+	 [ -z $status ]
+}
+
+@test "Added keys can be used for login successfully" {
+	 gen_sshkey testuser2
+	 key=$(cat /tmp/git-deploy-test/testuser2.pub)
+	 command="ssh-key testuser2 ${key}"
+
+	 run_container
+	 ssh_command "$command"
+	 [ -z $status ]
+
+	ssh -v -p2222 -i /tmp/git-deploy-test/testuser2 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no git@${DOCKER_HOST_IP}
+
+	 [ -z $status ]
+	 echo ${output}
 }

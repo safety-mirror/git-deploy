@@ -1,0 +1,21 @@
+#!/bin/bash
+
+USERNAME=$1
+PUBKEY="$2 $3 $4"
+
+git-shell-commands/ssh-check-key $PUBKEY
+if [ $? -eq 1 ]; then
+    echo "ssh key not valid"
+    exit 1
+fi
+
+mkdir -p .ssh/authorized_keys.d/
+
+KEYFILE=".ssh/authorized_keys.d/${USERNAME}.pub"
+
+echo "command=\"login ${USERNAME}\" ${PUBKEY}" \
+    >> ${KEYFILE}
+
+#Turns out authorized_keys.d is just a thing people do apparently
+cat .ssh/authorized_keys.d/* > .ssh/authorized_keys
+git-shell-commands/backup

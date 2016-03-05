@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo "Welcome, $1!"
+
+export CURRENT_USER=$1
+
+args=("${@[@]:1}")
+$args
