@@ -27,8 +27,6 @@ while IFS='' read -r key || [[ -n "$line" ]]; do
     fi
 done < .ssh/authorized_keys
 
-echo $(cat ${KEYFILE})
-
 if [ $SKIP_KEY -eq 0 ]; then
     echo "Adding key ${NEW_KEY_FP}..."
     cat ${KEYFILE} >> .ssh/authorized_keys
