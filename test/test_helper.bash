@@ -115,6 +115,7 @@ clone_repo(){
 ssh_command(){
 	ssh \
 		-p2222 \
+                -a \
 		-i /tmp/git-deploy-test/sshkey \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
