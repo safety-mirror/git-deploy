@@ -2,5 +2,6 @@
 
 export CURRENT_USER=$1
 
-args=("${@[@]:1}")
-eval $args
+shift
+
+/usr/bin/git-shell "$@"
