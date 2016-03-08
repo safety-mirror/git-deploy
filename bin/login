@@ -2,6 +2,4 @@
 
 export CURRENT_USER=$1
 
-shift
-
-/usr/bin/git-shell "$@"
+eval ${SSH_ORIGINAL_COMMAND}
