@@ -1,0 +1,35 @@
+#!/bin/bash
+
+USERNAME=$1
+PUBKEY="$2 $3 $4"
+# Will be set if a key with the same fingerprint is already present
+SKIP_KEY=0
+
+KEYFILE="/tmp/${USERNAME}.pub"
+
+# Echo the key to /tmp, then try to take its fingerprint with ssh-keygen
+# Trying to take the fingerprint will fail if the key is invalid
+echo "command=\"login ${USERNAME}\" ${PUBKEY}" > ${KEYFILE}
+NEW_KEY_FP=$(ssh-keygen -l -f ${KEYFILE})
+if [ $? -ne 0 ]; then
+    echo "ssh key not valid"
+    rm $KEYFILE
+    exit 1
+fi
+
+while IFS='' read -r key || [[ -n "$line" ]]; do
+    echo $key > /tmp/comparekey.pub
+    EXISTING_FP=$(ssh-keygen -l -f /tmp/comparekey.pub)
+    if [ "$NEW_KEY_FP" == "$EXISTING_FP" ]; then
+        echo "Key ${NEW_KEY_FP} already present"
+        SKIP_KEY=1
+        break
+    fi
+done < .ssh/authorized_keys
+
+if [ $SKIP_KEY -eq 0 ]; then
+    echo "Adding key ${NEW_KEY_FP}..."
+    cat ${KEYFILE} >> .ssh/authorized_keys
+    git-shell-commands/backup
+fi
+

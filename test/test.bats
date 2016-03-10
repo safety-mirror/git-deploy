@@ -28,7 +28,6 @@ teardown(){
 }
 
 @test "Reject if HOOK_REPO_VERIFY and no known signature on HOOK_REPO" {
-
 	run_container
 	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
@@ -107,7 +106,7 @@ teardown(){
 
 	push_hook testhookrepo somebranch pre-receive
 
-    set_config testrepo HOOK_REPO_REF somebranch
+	set_config testrepo HOOK_REPO_REF somebranch
 
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
@@ -177,7 +176,7 @@ teardown(){
 
 	push_hook testhookrepo somebranch update
 
-    set_config testrepo HOOK_REPO_REF somebranch
+	set_config testrepo HOOK_REPO_REF somebranch
 
 	run push_test_commit testrepo goodfile
 	[ "$status" -eq 0 ]
@@ -219,7 +218,7 @@ teardown(){
 	destroy_container
 	run_container /git/testhookrepo
 	push_hook testhookrepo somebranch post-receive
-    set_config testrepo HOOK_REPO_REF somebranch
+	set_config testrepo HOOK_REPO_REF somebranch
 
 	run push_test_commit testrepo somefile
 	echo "${lines[8]}" | grep "post-receive success"
@@ -391,4 +390,35 @@ ${lines[1]}
 	run docker logs test-git-deploy
 	echo ${output} | grep -q "Accepting goodfile"
 	echo ${output} | grep -q "Rejecting badfile"
+}
+
+@test "ssh key validation fails with a bad key" {
+	 run_container
+	 key=$(cat /tmp/git-deploy-test/sshkey.pub | cut -b 512-)
+	 command="ssh-key badkey '${key}'"
+	 run ssh_command $command
+	 [ $status -eq 1 ]
+}
+
+@test "Adding an ssh key for a user" {
+	 run_container
+	 key=$(cat /tmp/git-deploy-test/sshkey.pub)
+	 command="ssh-key testuser ${key}"
+	 run ssh_command "$command"
+	[ $status -eq 0 ]
+}
+
+@test "Added keys can be used for login successfully" {
+	 gen_sshkey testuser2
+	 key=$(cat /tmp/git-deploy-test/testuser2.pub)
+	 run_container
+	 command="ssh-key testuser2 ${key}"
+	 run ssh_command "$command"
+	 [ $status -eq 0 ]
+
+	ssh -v -p2222 \
+		-a -i /tmp/git-deploy-test/testuser2 \
+		-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+		git@${DOCKER_HOST_IP}
+	[ $status -eq 0 ]
 }
