@@ -24,8 +24,6 @@ PrintMotd no
 PrintLastLog yes
 TCPKeepAlive yes
 
-AcceptEnv LANG LC_*
-
 UsePAM yes
 HostKey /git/.ssh/host_keys/ssh_host_rsa_key
 HostKey /git/.ssh/host_keys/ssh_host_dsa_key
