@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ~/.profile
+
 # It would be nice to have this happen automatically, but putting it into
 # bin/login seems kind of heavy.
 
