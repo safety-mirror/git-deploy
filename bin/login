@@ -1,6 +1,7 @@
 #!/bin/bash
 
-PATH=$PATH:/git/git-shell-commands
+PATH=$PATH:/git/git-shell-commands:/git/helpers
+
 export CURRENT_USER=$1
 
 eval ${SSH_ORIGINAL_COMMAND}
