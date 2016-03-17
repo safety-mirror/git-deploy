@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# It would be nice to have this happen automatically, but putting it into
+# bin/login seems kind of heavy.
+
+if [ ! -z "$HELPER_REPO" ]; then
+        helper_dir="/git/helpers"
+        if [ ! -d "$helper_dir" ]; then
+                mkdir -p $helper_dir
+                git clone $HELPER_REPO $helper_dir
+        fi
+        if [ ! -z "$HELPER_REPO_REF" ]; then
+                git \
+                        --git-dir="$helper_dir/.git" \
+                        --work-tree="$helper_dir" \
+                        checkout $HELPER_REPO_REF
+        fi
+        git --git-dir="$helper_dir/.git" --work-tree="$helper_dir" pull
+        if [ "$HELPER_REPO_VERIFY" = true ]; then
+                sign_status=$( git --git-dir="$helper_dir/.git" --work-tree="$helper_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
+                if [ "$sign_status" != "G" ]; then
+                        echo "Latest commit in $HELPER_REPO is not signed by a known key"
+                        exit 1
+                fi
+        fi
+else
+        echo "HELPER_REPO not set! No helpers to update."
+fi
