@@ -47,6 +47,9 @@ RUN chown -R git: /git/
 
 VOLUME /git
 
+RUN touch /var/log/secure && \
+    chown git /var/log/secure
+
 USER git
 
 CMD ["bash","/init.sh"]
