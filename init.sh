@@ -28,4 +28,8 @@ mkfifo /var/log/git-deploy/hooks.log
 while cat /var/log/git-deploy/hooks.log; do :; done &
 
 echo "Starting Git-Deploy on port $PORT"
-/usr/sbin/sshd -D -e -p $PORT
+if [ -z "$SSH_LOG_FILE" ]; then
+	/usr/sbin/sshd -D -e -p $PORT
+else
+	/usr/sbin/sshd -D -e -p $PORT -E $SSH_LOG_FILE
+fi

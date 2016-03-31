@@ -100,6 +100,25 @@ services, server provisioning, etc.
 
     Changes are reflected in target Environment via defined git-hooks.
 
+## Reading ssh logs ##
+
+It is possible to read SSH logs by overwriting a specific log path (e.g. `/var/log/secure`)
+with your instance host's file. You can adjust the `git-deploy.service` like:
+
+```bash
+ExecStart=/usr/bin/docker run \
+  -p 22:2222 \
+  --env-file="/home/core/git-deploy.env"
+  -e SSH_LOG_FILE=/var/log/secure \
+  -v /var/log/secure:/var/log/secure \
+  -v /etc/hosts.deny:/etc/hosts.deny \
+  --name="git-deploy" \
+  pebble/git-deploy
+```
+
+This allows you to read and act on logs written to this file, for example using
+DenyHosts to read the logs, and writing to `hosts.deny` to deny certain hosts.
+
 ## Debugging ##
 
 If you need to manually debug/edit the hooks of a repo after creation, you can

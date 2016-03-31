@@ -191,7 +191,7 @@ teardown(){
 	clone_repo testrepo
 	push_hook testrepo master hooks/post-receive
 	run push_test_commit testrepo somefile
-	echo "${lines[5]}" | grep "post-receive success"
+	echo "${output}" | grep "post-receive success"
 }
 
 @test "External post-receive hook can echo text" {
@@ -205,7 +205,7 @@ teardown(){
 
 	push_hook testhookrepo master post-receive
 	run push_test_commit testrepo somefile
-	echo "${lines[6]}" | grep "post-receive success"
+	echo "${output}" | grep "post-receive success"
 }
 
 
@@ -221,7 +221,7 @@ teardown(){
 	set_config testrepo HOOK_REPO_REF somebranch
 
 	run push_test_commit testrepo somefile
-	echo "${lines[8]}" | grep "post-receive success"
+	echo "${output}" | grep "post-receive success"
 }
 
 @test "Concurrent pre-receive hooks are sandboxed" {
