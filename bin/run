@@ -10,13 +10,18 @@ if [ ! -z "$HOOK_REPO" ]; then
 		mkdir -p $hook_dir
 		git clone $HOOK_REPO $hook_dir
 	fi
+	git \
+		--git-dir="$hook_dir/.git" \
+		--work-tree="$hook_dir" \
+		fetch --all
 	if [ ! -z "$HOOK_REPO_REF" ]; then
 		git \
 			--git-dir="$hook_dir/.git" \
 			--work-tree="$hook_dir" \
-			checkout $HOOK_REPO_REF
+			reset --hard origin/$HOOK_REPO_REF
+	else
+		git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
 	fi
-	git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
 	if [ "$HOOK_REPO_VERIFY" = true ]; then
 		sign_status=$( git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
 		if [ "$sign_status" != "G" ]; then
