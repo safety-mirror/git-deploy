@@ -1,4 +1,5 @@
 #!/bin/bash
 
 echo "Hello $1"
+echo "From ${ENVIRONMENT}"
 date
