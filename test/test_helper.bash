@@ -168,7 +168,12 @@ push_hook() {
 	local repo_folder="/tmp/git-deploy-test/$repo/"
 	if [ -d "$repo_folder" ]; then
 		mkdir -p $repo_folder/$hook_folder
-		cp $PWD/test/test-hooks/$hook_name $repo_folder/$hook_file
+		hook_source=$PWD/test/test-hooks/$hook_file
+		if [ -f $PWD/test/test-hooks/$hook_name ]; then
+			hook_source=$PWD/test/test-hooks/$hook_name
+		fi
+
+		cp $hook_source $repo_folder/$hook_file
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder checkout -B $branch
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
 		if [[ ! -z "$sign_key" ]]; then

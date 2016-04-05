@@ -422,3 +422,27 @@ ${lines[1]}
 		git@${DOCKER_HOST_IP}
 	[ $status -eq 0 ]
 }
+
+@test "Run script from hook dir" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo master bin/hello
+
+	run ssh_command "run hello World"
+	[ $status -eq 0 ]
+	echo $output
+	echo ${output} | grep -q "Hello World"
+}
+
+@test "Run script from hook dir - not found" {
+	run_container
+	ssh_command "mkrepo testrepo"
+
+	run ssh_command "run hello World"
+	[ $status -eq 1 ]
+}
