@@ -433,16 +433,31 @@ ${lines[1]}
 	run_container /git/testhookrepo
 	push_hook testhookrepo master bin/hello
 
-	run ssh_command "run hello World"
+	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
-	echo $output
 	echo ${output} | grep -q "Hello World"
 }
+
+@test "Run script from hook dir - config.env" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	push_hook testhookrepo master bin/hello
+	push_hook testrepo master config.env
+
+	run ssh_command "run testrepo hello World"
+	[ $status -eq 0 ]
+	echo ${output} | grep -q "Hello World"
+	echo ${output} | grep -q "From testrepo"
+}
+
 
 @test "Run script from hook dir - not found" {
 	run_container
 	ssh_command "mkrepo testrepo"
 
-	run ssh_command "run hello World"
+	run ssh_command "run testrepo hello World"
 	[ $status -eq 1 ]
 }
