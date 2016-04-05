@@ -56,7 +56,7 @@ services, server provisioning, etc.
 4. Setup Git-Deploy repo for each environment this deploy server can manage.
 
     ```bash
-    ssh git@ci.someserver.com mkrepo staging
+    ssh git@ci.someserver.com mkrepo staging.git
    ```
 
 ## Usage ##

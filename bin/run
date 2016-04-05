@@ -2,10 +2,10 @@
 
 source ~/.profile
 
-export ENVIRONMENT=$1
+export ENVIRONMENT=$(echo $1 | sed 's/\.git$//')
 CMD=$2
 
-cd /git/${ENVIRONMENT}
+cd /git/${ENVIRONMENT}.git
 git ls-tree --name-only -r master | grep -Fx config.env 2>&1 > /dev/null
 if [ $? -eq 0 ]; then
 	source <(git cat-file blob master:config.env)

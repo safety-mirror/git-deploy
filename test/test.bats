@@ -426,7 +426,7 @@ ${lines[1]}
 @test "Run script from hook dir" {
 	run_container
 	ssh_command "mkrepo testhookrepo"
-	ssh_command "mkrepo testrepo"
+	ssh_command "mkrepo testrepo.git"
 	clone_repo testhookrepo
 	clone_repo testrepo
 	destroy_container
@@ -441,13 +441,13 @@ ${lines[1]}
 @test "Run script from hook dir - config.env" {
 	run_container
 	ssh_command "mkrepo testhookrepo"
-	ssh_command "mkrepo testrepo"
+	ssh_command "mkrepo testrepo.git"
 	clone_repo testhookrepo
 	clone_repo testrepo
 	push_hook testhookrepo master bin/hello
 	push_hook testrepo master config.env
 
-	run ssh_command "run testrepo hello World"
+	run ssh_command "run testrepo.git hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"
 	echo ${output} | grep -q "From testrepo"
@@ -456,7 +456,7 @@ ${lines[1]}
 
 @test "Run script from hook dir - not found" {
 	run_container
-	ssh_command "mkrepo testrepo"
+	ssh_command "mkrepo testrepo.git"
 
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 1 ]
