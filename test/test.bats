@@ -433,6 +433,7 @@ ${lines[1]}
 	run_container /git/testhookrepo
 	push_hook testhookrepo master bin/hello
 
+	ssh_command "hookpull testrepo"
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"
@@ -447,16 +448,30 @@ ${lines[1]}
 	push_hook testhookrepo master bin/hello
 	push_hook testrepo master config.env
 
+	# Pull isn't required as the push to "testrepo" already pulled.
 	run ssh_command "run testrepo.git hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"
 	echo ${output} | grep -q "From testrepo"
 }
 
-
 @test "Run script from hook dir - not found" {
 	run_container
 	ssh_command "mkrepo testrepo.git"
+
+	run ssh_command "run testrepo hello World"
+	[ $status -eq 1 ]
+}
+
+@test "Run script from hook dir - no pull" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo.git"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo master bin/hello
 
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 1 ]
