@@ -17,7 +17,7 @@ ensure_key() {
 	local unique=${3-false}
 	{
 		flock -x 200
-		EXISTING_KEYS=$(gpg2 --list-secret-keys ${key_name} >/dev/null 2>&1)
+		EXISTING_KEYS=$(gpg2 --list-keys ${key_name} >/dev/null 2>&1)
 		if [ $? -ne 0 ]; then
 			generate_key ${key_name} ${key_usage}
 		elif [ "${unique}" == "true" ]; then
