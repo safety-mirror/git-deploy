@@ -439,6 +439,23 @@ ${lines[1]}
 	echo ${output} | grep -q "Hello World"
 }
 
+@test "Run script from hook dir - quotes" {
+	run_container
+	ssh_command "mkrepo testhookrepo"
+	ssh_command "mkrepo testrepo.git"
+	clone_repo testhookrepo
+	clone_repo testrepo
+	destroy_container
+	run_container /git/testhookrepo
+	push_hook testhookrepo master bin/hello
+
+	ssh_command "hookpull testrepo"
+	run ssh_command "run testrepo hello 'from the other side' 'from the outside'"
+	[ $status -eq 0 ]
+	echo ${output} | grep -q "Hello from the other side"
+	echo ${output} | grep -q "Hi from the outside"
+}
+
 @test "Run script from hook dir - config.env" {
 	run_container
 	ssh_command "mkrepo testhookrepo"

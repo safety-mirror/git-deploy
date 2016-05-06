@@ -19,7 +19,7 @@ fi
 
 if [ -x "${hook_dir}/bin/${CMD}" ]; then
 	shift 2
-	${hook_dir}/bin/${CMD} $*
+	${hook_dir}/bin/${CMD} "$@"
 else
 	exit 1
 fi
