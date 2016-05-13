@@ -5,7 +5,7 @@ Requires=git-deploy.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/docker exec -it git-deploy backup full
+ExecStart=/usr/bin/docker exec -i git-deploy backup full
 
 [Install]
 WantedBy=multi-user.target
