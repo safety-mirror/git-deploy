@@ -11,3 +11,7 @@ if [ "$DEBUG" = true ]; then
 fi
 
 duplicity $FULL $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
+
+if [ "$FULL" = "full" ]; then
+	duplicity remove-all-but-n-full 1 $DEST --force
+fi

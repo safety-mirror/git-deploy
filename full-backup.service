@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup rotation
+After=git-deploy.service
+Requires=git-deploy.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec -it git-deploy backup full
+
+[Install]
+WantedBy=multi-user.target
