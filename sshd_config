@@ -17,6 +17,7 @@ RhostsRSAAuthentication no
 HostbasedAuthentication no
 PermitEmptyPasswords no
 ChallengeResponseAuthentication no
+AllowTcpForwarding no
 
 X11Forwarding no
 X11DisplayOffset 10
