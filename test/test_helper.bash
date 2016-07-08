@@ -1,20 +1,9 @@
-destroy_data_volume(){
-	docker rm -f test-git-deploy-data  &> /dev/null || return 0
+destroy_backups(){
+    docker exec -it "gitdeploy_git-deploy_1" \
+		bash -c "rm -rf /backup_volume/*" &> /dev/null
 }
 
-create_data_volume(){
-	docker run \
-		-v /backup_volume \
-		--name test-git-deploy-data \
-		pebble/test-git-deploy \
-		true &> /dev/null
-}
-
-build_container(){
-	docker build -t pebble/test-git-deploy .
-}
-
-run_container(){
+reset_container(){
 	local hook_repo=${1-}
 	local hook_repo_keys=${2}
 	if [ -z "$hook_repo_keys" ]; then
@@ -22,71 +11,60 @@ run_container(){
 	else
 		HOOK_REPO_VERIFY=true
 	fi
+	docker rm -f gitdeploy_git-deploy_1
 	docker run \
 		-d \
-		--name test-git-deploy \
+ 		--net gitdeploy_default \
 		-e DEST=file:///backup_volume \
 		-e PASSPHRASE=a_test_passphrase \
 		-e HOOK_REPO=$hook_repo \
 		-e HOOK_REPO_VERIFY=$HOOK_REPO_VERIFY \
 		-e DEPLOY_TIMEOUT_TERM=10s \
 		-e DEPLOY_TIMEOUT_KILL=12s \
-		--volumes-from test-git-deploy-data \
+		--volumes-from gitdeploy_git-deploy-data_1 \
 		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \
-		pebble/test-git-deploy
-		#pebble/test-git-deploy &> /dev/null
+		--name gitdeploy_git-deploy_1 \
+		gitdeploy_git-deploy
+		#pebble/gitdeploy_git-deploy_1 &> /dev/null
 	sleep 5
-	gen_sshkey
 	import_sshkey
 	for key_id in $hook_repo_keys; do
 		import_gpgkey $key_id
 	done	
 }
 
-destroy_container(){
-	docker rm -f test-git-deploy &> /dev/null || return 0
-}
-
 make_hook_repo(){
 	local hook_repo=${1-testhookrepo}
-	docker exec test-git-deploy bash -c "git init --bare $hook_repo"
-}
-
-gen_sshkey(){
-        OUT=$1
-        [ -z $OUT ] && OUT=sshkey
-	if [ ! -f /tmp/git-deploy-test/$OUT ]; then
-		ssh-keygen -b 2048 -t rsa -f /tmp/git-deploy-test/$OUT -q -N ""
-	fi
+	docker exec gitdeploy_git-deploy_1 bash -c "git init --bare $hook_repo"
 }
 
 import_sshkey(){
 	docker \
 		exec \
-		-i test-git-deploy \
+		-i gitdeploy_git-deploy_1 \
 		bash -c 'cat >> .ssh/authorized_keys' \
-			< /tmp/git-deploy-test/sshkey.pub
+			< test-keys/test-sshkey.pub
 }
 
 import_gpgkey(){
 	local key_id=${1-}
 	docker \
 		exec \
-		-i test-git-deploy \
+		-i gitdeploy_git-deploy_1 \
 		bash -c 'cat | gpg --import' \
-			< ${PWD}/test/test-keys/${key_id}.key
+			< ${PWD}/test-keys/${key_id}.key
 	docker \
 		exec \
-		-i test-git-deploy \
+		-i gitdeploy_git-deploy_1 \
 		bash -c 'cat >> /tmp/trustfile; gpg --import-ownertrust /tmp/trustfile' \
-			< ${PWD}/test/test-keys/${key_id}.key.trust
+			< ${PWD}/test-keys/${key_id}.key.trust
 }
 
 container_command(){
 	docker \
 		exec \
-		-i test-git-deploy \
+		-i gitdeploy_git-deploy_1 \
 		$* <&0
 }
 
@@ -97,7 +75,7 @@ git(){
 			exec /usr/bin/ssh \
 				-o UserKnownHostsFile=/dev/null \
 				-o StrictHostKeyChecking=no \
-				-i /tmp/git-deploy-test/sshkey $*
+				-i /test/test-keys/test-sshkey $*
 		EOF
 		chmod +x /tmp/git-deploy-test/gitssh
 	fi
@@ -108,18 +86,18 @@ clone_repo(){
 	oldpwd=$(pwd)
 	cd
 	rm -rf /tmp/git-deploy-test/$1
-	git clone ssh://git@${DOCKER_HOST_IP}:2222/git/${1} /tmp/git-deploy-test/$1
+	git clone ssh://git@git-deploy:2222/git/${1} /tmp/git-deploy-test/$1
 	cd $oldpwd
 }
 
 ssh_command(){
 	ssh \
-		-p2222 \
-                -a \
-		-i /tmp/git-deploy-test/sshkey \
+		-p 2222 \
+		-a \
+		-i /test/test-keys/test-sshkey \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
-		git@${DOCKER_HOST_IP} \
+		git@git-deploy \
 		$1
 }
 
@@ -168,9 +146,9 @@ push_hook() {
 	local repo_folder="/tmp/git-deploy-test/$repo/"
 	if [ -d "$repo_folder" ]; then
 		mkdir -p $repo_folder/$hook_folder
-		hook_source=$PWD/test/test-hooks/$hook_file
-		if [ -f $PWD/test/test-hooks/$hook_name ]; then
-			hook_source=$PWD/test/test-hooks/$hook_name
+		hook_source=$PWD/test-hooks/$hook_file
+		if [ -f $PWD/test-hooks/$hook_name ]; then
+			hook_source=$PWD/test-hooks/$hook_name
 		fi
 
 		cp $hook_source $repo_folder/$hook_file
@@ -180,8 +158,8 @@ push_hook() {
 			export GNUPGHOME="/tmp/git-deploy-test/gpg"
 			rm -rf $GNUPGHOME
 			mkdir -p $GNUPGHOME
-			echo gpg --import test/test-keys/${sign_key}.key
-			gpg --import test/test-keys/${sign_key}.key
+			echo gpg --import test-keys/${sign_key}.key
+			gpg --import test-keys/${sign_key}.key
 			git \
 				--git-dir=${repo_folder}/.git \
 				--work-tree=${repo_folder} \

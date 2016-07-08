@@ -1,0 +1,19 @@
+version: '2'
+services:
+  git-deploy:
+    build: ./
+    expose:
+      - "2222/tcp"
+    environment:
+      PORT: 2222
+    cap_add: 
+      - NET_BIND_SERVICE
+    volumes_from:
+      - git-deploy-data
+    depends_on:
+      - git-deploy-data
+  git-deploy-data:
+    build: ./
+    volumes:
+      - /git
+    tty: true

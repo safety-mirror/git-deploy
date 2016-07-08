@@ -1,13 +1,17 @@
-ifeq (, $(shell which docker-machine))
-	ENV_VARS=DOCKER_HOST_IP=localhost
-else
-	ENV_VARS=DOCKER_HOST_IP=$(shell docker-machine ip `docker-machine active`)
-endif
-
 all:
 
-test:
-	docker build -t pebble/test-git-deploy .
-	@ $(ENV_VARS) bats test/test.bats
+clean:
+	docker rm -f gitdeploy_git-deploy_1 || return 0
+	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml down --remove-orphans
 
-.PHONY: all test
+develop: clean
+	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml up -d
+	docker exec -it gitdeploy_test_1 bash
+
+test: clean
+	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml down
+	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml build
+	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml up -d
+	docker exec -it gitdeploy_test_1 bats test.bats
+
+.PHONY: all develop test

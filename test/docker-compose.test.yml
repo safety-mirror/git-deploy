@@ -1,0 +1,30 @@
+version: '2'
+services:
+  test:
+    build: ./test
+    volumes:
+      - ./test:/test
+      - /var/run/docker.sock:/var/run/docker.sock
+    links:
+      - "git-deploy:git-deploy"
+    depends_on:
+      - git-deploy
+      - git-deploy-data
+    tty: true
+    cap_add: 
+      - SYS_ADMIN
+  git-deploy:
+    environment:
+      DEST: file:///backup_volume
+      PASSPHRASE: a_test_passphrase
+      HOOK_REPO: null
+      HOOK_REPO_VERIFY: null
+      DEPLOY_TIMEOUT_TERM: 10s
+      DEPLOY_TIMEOUT_KILL: 10s
+    volumes:
+      - /dev/urandom:/dev/random
+    volumes_from:
+      - git-deploy-data
+  git-deploy-data:
+    volumes:
+      - /backup_volume
