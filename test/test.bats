@@ -1,6 +1,7 @@
 load test_helper
 
 setup(){
+	rm -rf /tmp/git-deploy-test
 	mkdir -p /tmp/git-deploy-test
     destroy_backups
     reset_container
@@ -57,8 +58,9 @@ teardown(){
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testrepo master hooks/pre-receive
-	run push_test_commit testrepo badfile
-	[ "$status" -eq 0 ]
+	push_test_commit testrepo badfile
+	#run push_test_commit testrepo badfile
+	#[ "$status" -eq 0 ]
 }
 
 @test "External pre-receive hook can reject bad commit" {
@@ -131,7 +133,7 @@ teardown(){
 	clone_repo testrepo
 	reset_container /git/testhookrepo
 
-	run push_test_commit testrepo badfile
+    run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
 
 	push_hook testhookrepo master update

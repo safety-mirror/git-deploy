@@ -27,7 +27,7 @@ reset_container(){
 		--name gitdeploy_git-deploy_1 \
 		gitdeploy_git-deploy
 		#pebble/gitdeploy_git-deploy_1 &> /dev/null
-	sleep 5
+	sleep 1
 	import_sshkey
 	for key_id in $hook_repo_keys; do
 		import_gpgkey $key_id

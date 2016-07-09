@@ -13,7 +13,8 @@ services:
     depends_on:
       - git-deploy-data
   git-deploy-data:
-    build: ./
+    image: debian
     volumes:
-      - /git
+      - /backup_volume
     tty: true
+    command: "chmod -R 777 /backup_volume"

@@ -21,6 +21,8 @@ RUN sed -i "s/httpredir.debian/mirrors.kernel/g" /etc/apt/sources.list && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN echo "source /test/test_helper.bash" >> /root/.bashrc
+
 RUN git clone https://github.com/sstephenson/bats.git && \
     bash bats/install.sh /usr
 
