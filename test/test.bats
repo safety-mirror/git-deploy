@@ -319,7 +319,7 @@ ${lines[1]}
 		-i /tmp/git-deploy-test/badkey \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
-		git@${DOCKER_HOST_IP}
+		git@git-deploy
 
 	run docker logs gitdeploy_git-deploy_1
 	echo ${output} | grep -q "Connection closed by"
@@ -357,24 +357,23 @@ ${lines[1]}
 }
 
 @test "Adding an ssh key for a user" {
-	 key=$(cat /tmp/git-deploy-test/sshkey.pub)
+	 key=$(cat test-keys/test-sshkey.pub)
 	 command="ssh-key testuser ${key}"
 	 run ssh_command "$command"
 	[ $status -eq 0 ]
 }
 
 @test "Added keys can be used for login successfully" {
-	 gen_sshkey testuser2
-	 key=$(cat /tmp/git-deploy-test/testuser2.pub)
+	 key=$(cat test-keys/test-sshkey2.pub)
 	 reset_container
 	 command="ssh-key testuser2 ${key}"
 	 run ssh_command "$command"
 	 [ $status -eq 0 ]
 
 	ssh -v -p2222 \
-		-a -i /tmp/git-deploy-test/testuser2 \
+		-a -i test-keys/test-sshkey2 \
 		-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-		git@${DOCKER_HOST_IP}
+		git@git-deploy
 	[ $status -eq 0 ]
 }
 
