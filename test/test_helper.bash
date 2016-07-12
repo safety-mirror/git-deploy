@@ -40,11 +40,7 @@ make_hook_repo(){
 }
 
 import_sshkey(){
-	docker \
-		exec \
-		-i gitdeploy_git-deploy_1 \
-		bash -c 'cat >> .ssh/authorized_keys' \
-			< test-keys/test-sshkey.pub
+	container_command ssh-key testuser $(cat test-keys/test-sshkey.pub)
 }
 
 import_gpgkey(){
@@ -91,10 +87,11 @@ clone_repo(){
 }
 
 ssh_command(){
+	key=${2-"test-keys/test-sshkey"}
 	ssh \
 		-p 2222 \
 		-a \
-		-i /test/test-keys/test-sshkey \
+		-i $key \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
 		git@git-deploy \
