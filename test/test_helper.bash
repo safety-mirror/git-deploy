@@ -22,6 +22,7 @@ reset_container(){
 		-e DEPLOY_TIMEOUT_TERM=10s \
 		-e DEPLOY_TIMEOUT_KILL=12s \
 		--volumes-from gitdeploy_git-deploy-data_1 \
+		--security-opt seccomp=unconfined \
 		-v /dev/urandom:/dev/random \
 		-p 2222:2222 \
 		--name gitdeploy_git-deploy_1 \
