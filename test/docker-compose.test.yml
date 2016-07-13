@@ -8,7 +8,7 @@ services:
     links:
       - "git-deploy:git-deploy"
     security_opt:
-      - label:seccomp:unconfirmed
+      - seccomp:unconfined
     depends_on:
       - git-deploy
       - git-deploy-data
@@ -17,7 +17,7 @@ services:
       - SYS_ADMIN
   git-deploy:
     security_opt:
-      - label:seccomp:unconfirmed
+      - seccomp:unconfined
     environment:
       DEST: file:///backup_volume
       PASSPHRASE: a_test_passphrase
