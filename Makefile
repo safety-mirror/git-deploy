@@ -1,7 +1,7 @@
 all:
 
 clean:
-	docker rm -f gitdeploy_git-deploy_1 || return 0
+	- docker rm -f gitdeploy_git-deploy_1
 	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml down --remove-orphans
 
 build:
