@@ -1,6 +1,6 @@
 destroy_backups(){
     docker exec -it "gitdeploy_git-deploy_1" \
-		bash -c "rm -rf /backup_volume/*" &> /dev/null
+		sh -c "rm -rf /backup_volume/*" &> /dev/null
 }
 
 reset_container(){
