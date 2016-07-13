@@ -1,6 +1,7 @@
 FROM debian:jessie
 
-RUN apt-get update && \
+RUN sed -i "s/httpredir.debian/mirrors.kernel/g" /etc/apt/sources.list && \
+    apt-get update && \
     LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
     duplicity \
     openssh-server \
