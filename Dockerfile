@@ -1,6 +1,6 @@
 FROM debian:jessie
 
-RUN sed -i "s/httpredir.debian/mirrors.kernel/g" /etc/apt/sources.list && \
+RUN aot-get clean && \
     apt-get update && \
     LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
     duplicity \
