@@ -4,12 +4,12 @@ RUN sed -i "s/httpredir.debian/mirrors.kernel/g" /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --force-yes \
         wget \
-        ansible \
+        vim \
+        nano \
         ssh \
         telnet \
         apt-transport-https \
         ca-certificates \
-        postgresql \
         git &&\
     apt-key adv \
         --keyserver hkp://pgp.mit.edu:80 \
