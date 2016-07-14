@@ -9,7 +9,7 @@ KEYFILE="/tmp/${USERNAME}.pub"
 
 # Echo the key to /tmp, then try to take its fingerprint with ssh-keygen
 # Trying to take the fingerprint will fail if the key is invalid
-echo "command=\"login ${USERNAME}\" ${PUBKEY}" > ${KEYFILE}
+echo "no-port-forwarding,no-pty,command=\"login ${USERNAME}\" ${PUBKEY}" > ${KEYFILE}
 NEW_KEY_FP=$(ssh-keygen -l -f ${KEYFILE})
 if [ $? -ne 0 ]; then
     echo "ssh key not valid"

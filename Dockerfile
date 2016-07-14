@@ -1,6 +1,7 @@
 FROM debian:jessie
 
-RUN apt-get update && \
+RUN apt-get clean && \
+    apt-get update && \
     LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
     duplicity \
     openssh-server \

@@ -11,6 +11,11 @@ teardown(){
 	rm -rf /tmp/git-deploy-test
 }
 
+@test "Can resolve ssh-key to username" {
+	run ssh_command "user"
+	echo "${output}" | grep "testuser"
+}
+
 @test "Can backup and restore a repository" {
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
@@ -350,9 +355,9 @@ ${lines[1]}
 }
 
 @test "ssh key validation fails with a bad key" {
-	 key=$(cat /tmp/git-deploy-test/sshkey.pub | cut -b 512-)
+	 key=$(cat test-keys/test-sshkey.pub | cut -b 512-)
 	 command="ssh-key badkey '${key}'"
-	 run ssh_command $command
+	 run ssh_command "$command"
 	 [ $status -eq 1 ]
 }
 
@@ -370,10 +375,7 @@ ${lines[1]}
 	 run ssh_command "$command"
 	 [ $status -eq 0 ]
 
-	ssh -v -p2222 \
-		-a -i test-keys/test-sshkey2 \
-		-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-		git@git-deploy
+    run ssh_command "user" test-keys/test-sshkey2
 	[ $status -eq 0 ]
 }
 
