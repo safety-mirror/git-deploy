@@ -3,8 +3,8 @@ load test_helper
 setup(){
 	rm -rf /tmp/git-deploy-test
 	mkdir -p /tmp/git-deploy-test
-    destroy_backups
-    reset_container
+	destroy_backups
+	reset_container
 }
 
 teardown(){
@@ -32,7 +32,7 @@ teardown(){
 	clone_repo testrepo
 	reset_container /git/testhookrepo "94F94EC1"
 
-    push_hook testhookrepo master hooks/pre-receive 94F94EC1
+	push_hook testhookrepo master hooks/pre-receive 94F94EC1
 	run push_test_commit testrepo
 	[ "$status" -eq 0 ]
 
@@ -138,7 +138,7 @@ teardown(){
 	clone_repo testrepo
 	reset_container /git/testhookrepo
 
-    run push_test_commit testrepo badfile
+	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
 
 	push_hook testhookrepo master update
@@ -295,8 +295,6 @@ teardown(){
 }
 
 @test "Generate application secret but key not created" {
-	reset_container
-
 	run ssh_command "secret testkey foo"
 	[ "$status" -eq 1 ]
 	echo $output | grep "not found"
@@ -355,27 +353,27 @@ ${lines[1]}
 }
 
 @test "ssh key validation fails with a bad key" {
-	 key=$(cat test-keys/test-sshkey.pub | cut -b 512-)
-	 command="ssh-key badkey '${key}'"
-	 run ssh_command "$command"
-	 [ $status -eq 1 ]
+	key=$(cat test-keys/test-sshkey.pub | cut -b 512-)
+	command="ssh-key badkey '${key}'"
+	run ssh_command "$command"
+	[ $status -eq 1 ]
 }
 
 @test "Adding an ssh key for a user" {
-	 key=$(cat test-keys/test-sshkey.pub)
-	 command="ssh-key testuser ${key}"
-	 run ssh_command "$command"
+	key=$(cat test-keys/test-sshkey.pub)
+	command="ssh-key testuser ${key}"
+	run ssh_command "$command"
 	[ $status -eq 0 ]
 }
 
 @test "Added keys can be used for login successfully" {
-	 key=$(cat test-keys/test-sshkey2.pub)
-	 reset_container
-	 command="ssh-key testuser2 ${key}"
-	 run ssh_command "$command"
-	 [ $status -eq 0 ]
+	key=$(cat test-keys/test-sshkey2.pub)
+	reset_container
+	command="ssh-key testuser2 ${key}"
+	run ssh_command "$command"
+	[ $status -eq 0 ]
 
-    run ssh_command "user" test-keys/test-sshkey2
+	run ssh_command "user" test-keys/test-sshkey2
 	[ $status -eq 0 ]
 }
 
