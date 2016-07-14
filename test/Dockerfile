@@ -1,6 +1,6 @@
 FROM debian:jessie
 
-RUN sed -i "s/httpredir.debian/mirrors.kernel/g" /etc/apt/sources.list && \
+RUN apt-get clean && \
     apt-get update && \
     apt-get install -y --force-yes \
         wget \
