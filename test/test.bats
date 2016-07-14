@@ -367,6 +367,7 @@ ${lines[1]}
 
 	run ssh_command "user" test-keys/test-sshkey2
 	[ $status -eq 0 ]
+	echo ${output} | grep -q "testuser2"
 }
 
 @test "Run script from hook dir" {
