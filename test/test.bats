@@ -3,12 +3,13 @@ load test_helper
 setup(){
 	rm -rf /tmp/git-deploy-test
 	mkdir -p /tmp/git-deploy-test
-	destroy_backups
 	reset_container
+	destroy_backups
+	set_container "git-deploy-test"
 }
 
 teardown(){
-	rm -rf /tmp/git-deploy-test
+    rm -rf /tmp/git-deploy-test
 }
 
 @test "Can resolve ssh-key to username" {
@@ -26,11 +27,13 @@ teardown(){
 }
 
 @test "Reject if HOOK_REPO_VERIFY and no known signature on HOOK_REPO" {
-	make_hook_repo testhookrepo
+    set_container "git-deploy-test-exthooks-sig"
+
+    make_hook_repo
+
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo "94F94EC1"
 
 	push_hook testhookrepo master hooks/pre-receive 94F94EC1
 	run push_test_commit testrepo
@@ -41,7 +44,7 @@ teardown(){
 	[ "$status" -eq 1 ]
 
 	push_hook testhookrepo master hooks/post-receive 9BE4FBEC
-	run push_test_commit testrepo
+	run push_test_commit testrepo 
 	[ "$status" -eq 1 ]
 }
 
@@ -58,22 +61,22 @@ teardown(){
 }
 
 @test "Internal pre-receive hook ignored if HOOK_REPO is defined" {
-	make_hook_repo testhookrepo
-	reset_container /git/testhookrepo
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testrepo master hooks/pre-receive
-	push_test_commit testrepo badfile
-	#run push_test_commit testrepo badfile
-	#[ "$status" -eq 0 ]
+	run push_test_commit testrepo badfile
+	[ "$status" -eq 0 ]
 }
 
 @test "External pre-receive hook can reject bad commit" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+
+	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
+	clone_repo testhookrepo "git-deploy-test"
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
@@ -88,11 +91,11 @@ teardown(){
 }
 
 @test "External pre-receive hook in branch can reject bad commit" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
+	clone_repo testhookrepo "git-deploy-test"
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
@@ -109,11 +112,12 @@ teardown(){
 }
 
 @test "External pre-receive hook can reject bad commit without priming" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
+
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 
 	push_hook testhookrepo master pre-receive
 
@@ -132,11 +136,11 @@ teardown(){
 }
 
 @test "External update hook can reject bad commit" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
@@ -151,11 +155,11 @@ teardown(){
 }
 
 @test "External update hook in branch can reject bad commit" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 
 	run push_test_commit testrepo badfile
 	[ "$status" -eq 0 ]
@@ -180,11 +184,11 @@ teardown(){
 }
 
 @test "External post-receive hook can echo text" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 
 	push_hook testhookrepo master post-receive
 	run push_test_commit testrepo somefile
@@ -193,11 +197,11 @@ teardown(){
 
 
 @test "External post-receive hook in branch can echo text" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo somebranch post-receive
 	set_config testrepo HOOK_REPO_REF somebranch
 
@@ -206,11 +210,11 @@ teardown(){
 }
 
 @test "Concurrent pre-receive hooks are sandboxed" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo master pre-receive
 
 	# background push: slowfile will sleep for 5 seconds
@@ -229,11 +233,11 @@ teardown(){
 }
 
 @test "Sandbox locks expire" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo master pre-receive
 
 	# The hook never finishes, but push times out
@@ -264,11 +268,11 @@ teardown(){
 }
 
 @test "Generate encryption key callback" {
-	ssh_command "mkrepo testhookrepo"
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
-	clone_repo testhookrepo
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo somebranch post-generate-key
 	set_config testrepo HOOK_REPO_REF somebranch
 
@@ -309,7 +313,7 @@ teardown(){
 	DECRYPTED=$(echo "-----BEGIN PGP MESSAGE-----
 
 ${lines[1]}
------END PGP MESSAGE-----" | container_command gpg --decrypt)
+-----END PGP MESSAGE-----" | container_command "gpg --decrypt")
 	echo $DECRYPTED | grep -q "FOO=bar"
 }
 
@@ -378,11 +382,11 @@ ${lines[1]}
 }
 
 @test "Run script from hook dir" {
-	ssh_command "mkrepo testhookrepo"
-	ssh_command "mkrepo testrepo.git"
-	clone_repo testhookrepo
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
+	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo master bin/hello
 
 	ssh_command "hookpull testrepo"
@@ -392,11 +396,11 @@ ${lines[1]}
 }
 
 @test "Run script from hook dir - quotes" {
-	ssh_command "mkrepo testhookrepo"
-	ssh_command "mkrepo testrepo.git"
-	clone_repo testhookrepo
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
+	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo master bin/hello
 
 	ssh_command "hookpull testrepo"
@@ -407,33 +411,34 @@ ${lines[1]}
 }
 
 @test "Run script from hook dir - config.env" {
-	ssh_command "mkrepo testhookrepo"
-	ssh_command "mkrepo testrepo.git"
-	clone_repo testhookrepo
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
+	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
 	push_hook testhookrepo master bin/hello
 	push_hook testrepo master config.env
 
 	# Pull isn't required as the push to "testrepo" already pulled.
-	run ssh_command "run testrepo.git hello World"
+	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"
 	echo ${output} | grep -q "From testrepo"
 }
 
 @test "Run script from hook dir - not found" {
-	ssh_command "mkrepo testrepo.git"
+	ssh_command "mkrepo testrepo"
 
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 1 ]
 }
 
 @test "Run script from hook dir - no pull" {
-	ssh_command "mkrepo testhookrepo"
-	ssh_command "mkrepo testrepo.git"
-	clone_repo testhookrepo
+    set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
+	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-	reset_container /git/testhookrepo
 	push_hook testhookrepo master bin/hello
 
 	run ssh_command "run testrepo hello World"

@@ -1,20 +1,15 @@
 version: '2'
 services:
   git-deploy:
+    container_name: 'git-deploy'
+    security_opt:
+      - seccomp:unconfined
     build: ./
     expose:
       - "2222/tcp"
     environment:
       PORT: 2222
+      DEPLOY_TIMEOUT_TERM: 10s
+      DEPLOY_TIMEOUT_KILL: 12s
     cap_add: 
       - NET_BIND_SERVICE
-    volumes_from:
-      - git-deploy-data
-    depends_on:
-      - git-deploy-data
-  git-deploy-data:
-    image: debian
-    volumes:
-      - /backup_volume
-    tty: true
-    command: "chmod -R 777 /backup_volume"

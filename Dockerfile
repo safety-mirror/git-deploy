@@ -46,8 +46,6 @@ RUN mkdir git-shell-hooks && ln -s /opt/git-deploy/base-hooks/* git-shell-hooks/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
 
-VOLUME /git
-
 RUN touch /var/log/secure && \
     chown git /var/log/secure
 

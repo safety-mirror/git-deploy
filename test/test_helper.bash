@@ -1,58 +1,49 @@
 destroy_backups(){
-    docker exec -it "gitdeploy_git-deploy_1" \
-		sh -c "rm -rf /backup_volume/*" &> /dev/null
+	for suffix in test test-exthooks test-exthooks-sig; do
+    	docker exec -it "git-deploy-$suffix" \
+			sh -c "rm -rf /backup_volume/*"
+	done
 }
 
 reset_container(){
-	local hook_repo=${1-}
-	local hook_repo_keys=${2}
-	if [ -z "$hook_repo_keys" ]; then
-		HOOK_REPO_VERIFY=false
-	else
-		HOOK_REPO_VERIFY=true
-	fi
-	docker rm -f gitdeploy_git-deploy_1
-	docker run \
-		-d \
- 		--net gitdeploy_default \
-		-e DEST=file:///backup_volume \
-		-e PASSPHRASE=a_test_passphrase \
-		-e HOOK_REPO=$hook_repo \
-		-e HOOK_REPO_VERIFY=$HOOK_REPO_VERIFY \
-		-e DEPLOY_TIMEOUT_TERM=10s \
-		-e DEPLOY_TIMEOUT_KILL=12s \
-		--volumes-from gitdeploy_git-deploy-data_1 \
-		--security-opt seccomp=unconfined \
-		-v /dev/urandom:/dev/random \
-		-p 2222:2222 \
-		--name gitdeploy_git-deploy_1 \
-		gitdeploy_git-deploy
-	sleep 1
-	import_sshkey
-	for key_id in $hook_repo_keys; do
-		import_gpgkey $key_id
-	done	
+	for suffix in test test-exthooks test-exthooks-sig; do
+		docker exec --user root -it git-deploy-$suffix sh -c "rm -rf /git && cp -R /git-initial /git && chown -R git: /git && chmod -R 777 /backup_volume"
+		import_sshkey "git-deploy-$suffix"
+	done
+	import_gpgkey "94F94EC1" "git-deploy-test-exthooks-sig"
 }
 
 make_hook_repo(){
 	local hook_repo=${1-testhookrepo}
-	docker exec gitdeploy_git-deploy_1 bash -c "git init --bare $hook_repo"
+	docker exec git-deploy-test bash -c "git init --bare $hook_repo"
 }
 
 import_sshkey(){
-	container_command ssh-key testuser $(cat test-keys/test-sshkey.pub)
+	local CONTAINER=${1-"git-deploy-test"}
+	container_command "ssh-key testuser $(cat test-keys/test-sshkey.pub)"
+	docker \
+		exec \
+		-i $CONTAINER \
+		bash -c 'cat >> /git/.ssh/id_rsa; chmod 400 /git/.ssh/id_rsa' \
+			< ${PWD}/test-keys/test-sshkey
+	docker \
+		exec \
+		-i $CONTAINER \
+		bash -c 'cat >> /git/.ssh/config' \
+			< ${PWD}/ssh_client.config
 }
 
 import_gpgkey(){
 	local key_id=${1-}
+	local CONTAINER=${2-"git-deploy-test"}
 	docker \
 		exec \
-		-i gitdeploy_git-deploy_1 \
+		-i $CONTAINER \
 		bash -c 'cat | gpg --import' \
 			< ${PWD}/test-keys/${key_id}.key
 	docker \
 		exec \
-		-i gitdeploy_git-deploy_1 \
+		-i $CONTAINER \
 		bash -c 'cat >> /tmp/trustfile; gpg --import-ownertrust /tmp/trustfile' \
 			< ${PWD}/test-keys/${key_id}.key.trust
 }
@@ -60,29 +51,22 @@ import_gpgkey(){
 container_command(){
 	docker \
 		exec \
-		-i gitdeploy_git-deploy_1 \
+		--user root \
+		-i $CONTAINER \
 		$* <&0
 }
 
-git(){
-	if [ ! -f /tmp/git-deploy-test/gitssh ]; then
-		cat <<- "EOF" > /tmp/git-deploy-test/gitssh
-			#!/bin/bash
-			exec /usr/bin/ssh \
-				-o UserKnownHostsFile=/dev/null \
-				-o StrictHostKeyChecking=no \
-				-i /test/test-keys/test-sshkey $*
-		EOF
-		chmod +x /tmp/git-deploy-test/gitssh
-	fi
-	GIT_SSH="/tmp/git-deploy-test/gitssh" /usr/bin/git "$@"
+set_container(){
+	export CONTAINER=${1-"git-deploy-test"}
 }
 
 clone_repo(){
+	local repo=${1-"test-repo"}
+	local CONTAINER=${2-"$CONTAINER"}
 	oldpwd=$(pwd)
 	cd
 	rm -rf /tmp/git-deploy-test/$1
-	git clone ssh://git@git-deploy:2222/git/${1} /tmp/git-deploy-test/$1
+	git clone ssh://git@${CONTAINER}:2222/git/${1} /tmp/git-deploy-test/$1
 	cd $oldpwd
 }
 
@@ -94,7 +78,7 @@ ssh_command(){
 		-i $key \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
-		git@git-deploy \
+		git@${CONTAINER} \
 		$1
 }
 
@@ -147,7 +131,6 @@ push_hook() {
 		if [ -f $PWD/test-hooks/$hook_name ]; then
 			hook_source=$PWD/test-hooks/$hook_name
 		fi
-
 		cp $hook_source $repo_folder/$hook_file
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder checkout -B $branch
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .

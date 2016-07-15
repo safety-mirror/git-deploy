@@ -1,19 +1,21 @@
 all:
 
 clean:
-	- docker rm -f gitdeploy_git-deploy_1
 	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml down --remove-orphans
 
 build:
 	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml build
 
-
-develop: clean build
+test-env:
 	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml up -d
-	docker exec -it gitdeploy_test_1 bash
+	docker exec --user root -it git-deploy-test sh -c "cp -R /git /git-initial"
+	docker exec --user root -it git-deploy-test-exthooks sh -c "cp -R /git /git-initial"
+	docker exec --user root -it git-deploy-test-exthooks-sig sh -c "cp -R /git /git-initial"
 
-test: clean build
-	docker-compose -f docker-compose.yml -f ./test/docker-compose.test.yml up -d
-	docker exec -it gitdeploy_test_1 bats test.bats
+test: clean build test-env
+	docker exec --user root -it git-deploy-test-runner bats test.bats
 
-.PHONY: all develop test
+develop: clean build test-env
+	docker exec -it git-deploy-test-runner bash
+
+.PHONY: all develop test test-env
