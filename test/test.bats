@@ -15,9 +15,9 @@ load test_helper
 }
 
 @test "Reject if HOOK_REPO_VERIFY and no known signature on HOOK_REPO" {
-    set_container "git-deploy-test-exthooks-sig"
+	set_container "git-deploy-test-exthooks-sig"
 
-    make_hook_repo
+	make_hook_repo
 
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -32,7 +32,7 @@ load test_helper
 	[ "$status" -eq 1 ]
 
 	push_hook testhookrepo master hooks/post-receive 9BE4FBEC
-	run push_test_commit testrepo 
+	run push_test_commit testrepo
 	[ "$status" -eq 1 ]
 }
 
@@ -49,7 +49,7 @@ load test_helper
 }
 
 @test "Internal pre-receive hook ignored if HOOK_REPO is defined" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
@@ -59,7 +59,7 @@ load test_helper
 }
 
 @test "External pre-receive hook can reject bad commit" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 
 	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
@@ -79,7 +79,7 @@ load test_helper
 }
 
 @test "External pre-receive hook in branch can reject bad commit" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
 	clone_repo testhookrepo "git-deploy-test"
@@ -100,7 +100,7 @@ load test_helper
 }
 
 @test "External pre-receive hook can reject bad commit without priming" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 
@@ -124,7 +124,7 @@ load test_helper
 }
 
 @test "External update hook can reject bad commit" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -143,7 +143,7 @@ load test_helper
 }
 
 @test "External update hook in branch can reject bad commit" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -172,7 +172,7 @@ load test_helper
 }
 
 @test "External post-receive hook can echo text" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -185,7 +185,7 @@ load test_helper
 
 
 @test "External post-receive hook in branch can echo text" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -198,7 +198,7 @@ load test_helper
 }
 
 @test "Concurrent pre-receive hooks are sandboxed" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -221,7 +221,7 @@ load test_helper
 }
 
 @test "Sandbox locks expire" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -256,7 +256,7 @@ load test_helper
 }
 
 @test "Generate encryption key callback" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -370,7 +370,7 @@ ${lines[1]}
 }
 
 @test "Run script from hook dir" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -384,7 +384,7 @@ ssh_command "hookpull testrepo"
 }
 
 @test "Run script from hook dir - quotes" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -399,7 +399,7 @@ ssh_command "hookpull testrepo"
 }
 
 @test "Run script from hook dir - config.env" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"
@@ -422,7 +422,7 @@ ssh_command "hookpull testrepo"
 }
 
 @test "Run script from hook dir - no pull" {
-    set_container "git-deploy-test-exthooks"
+	set_container "git-deploy-test-exthooks"
 	make_hook_repo
 	clone_repo testhookrepo "git-deploy-test"
 	ssh_command "mkrepo testrepo"

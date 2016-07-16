@@ -7,12 +7,12 @@ setup(){
 }
 
 teardown(){
-    rm -rf /tmp/git-deploy-test
+	rm -rf /tmp/git-deploy-test
 }
 
 destroy_backups(){
 	for suffix in test test-exthooks test-exthooks-sig; do
-    	docker exec -it "git-deploy-$suffix" \
+		docker exec -it "git-deploy-$suffix" \
 			sh -c "rm -rf /backup_volume/*"
 	done
 }
