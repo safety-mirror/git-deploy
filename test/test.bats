@@ -1,17 +1,5 @@
 load test_helper
 
-setup(){
-	rm -rf /tmp/git-deploy-test
-	mkdir -p /tmp/git-deploy-test
-	reset_container
-	destroy_backups
-	set_container "git-deploy-test"
-}
-
-teardown(){
-    rm -rf /tmp/git-deploy-test
-}
-
 @test "Can resolve ssh-key to username" {
 	run ssh_command "user"
 	echo "${output}" | grep "testuser"
@@ -326,16 +314,16 @@ ${lines[1]}
 		-i /tmp/git-deploy-test/badkey \
 		-o UserKnownHostsFile=/dev/null \
 		-o StrictHostKeyChecking=no \
-		git@git-deploy
+		git@git-deploy-test
 
-	run docker logs gitdeploy_git-deploy_1
+	run docker logs git-deploy-test
 	echo ${output} | grep -q "Connection closed by"
 }
 
 @test "Log authentication success" {
 	ssh_command "mkrepo testrepo"
 
-	run docker logs gitdeploy_git-deploy_1
+	run docker logs git-deploy-test
 
 	echo ${output} | grep -q "Accepted publickey for git"
 }
@@ -351,7 +339,7 @@ ${lines[1]}
 	sleep 1
 
 	# Confirm stderr and stdout from the hook are captured:
-	run docker logs gitdeploy_git-deploy_1
+	run docker logs git-deploy-test
 	echo ${output} | grep -q "Accepting goodfile"
 	echo ${output} | grep -q "Rejecting badfile"
 }
@@ -389,7 +377,7 @@ ${lines[1]}
 	clone_repo testrepo
 	push_hook testhookrepo master bin/hello
 
-	ssh_command "hookpull testrepo"
+ssh_command "hookpull testrepo"
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"

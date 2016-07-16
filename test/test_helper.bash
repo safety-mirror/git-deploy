@@ -1,3 +1,15 @@
+setup(){
+	rm -rf /tmp/git-deploy-test
+	mkdir -p /tmp/git-deploy-test
+	reset_container
+	destroy_backups
+	set_container "git-deploy-test"
+}
+
+teardown(){
+    rm -rf /tmp/git-deploy-test
+}
+
 destroy_backups(){
 	for suffix in test test-exthooks test-exthooks-sig; do
     	docker exec -it "git-deploy-$suffix" \
@@ -51,7 +63,6 @@ import_gpgkey(){
 container_command(){
 	docker \
 		exec \
-		--user root \
 		-i $CONTAINER \
 		$* <&0
 }
