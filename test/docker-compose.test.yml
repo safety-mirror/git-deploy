@@ -8,7 +8,9 @@ services:
       - ./test:/test
       - /var/run/docker.sock:/var/run/docker.sock
     links:
-      - "git-deploy:git-deploy"
+      - "git-deploy-test:git-deploy-test"
+      - "git-deploy-test-exthooks:git-deploy-test-exthooks"
+      - "git-deploy-test-exthooks-sig:git-deploy-test-exthooks-sig"
     security_opt:
       - seccomp:unconfined
     depends_on:
@@ -42,6 +44,8 @@ services:
     volumes:
       - /dev/urandom:/dev/random
       - /backup_volume
+    links:
+      - "git-deploy-test:git-deploy-test"
 
   git-deploy-test-exthooks-sig:
     container_name: 'git-deploy-test-exthooks-sig'
@@ -54,3 +58,5 @@ services:
     volumes:
       - /dev/urandom:/dev/random
       - /backup_volume
+    links:
+      - "git-deploy-test:git-deploy-test"

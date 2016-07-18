@@ -5,16 +5,39 @@ source /test/test_helper.bash
 setup
 
 docker ps
+docker network ls
 
-key=${2-"test-keys/test-sshkey"}
+
+
+ssh -p 2222 \
+	-a \
+	-vvvv \
+	-i "test-keys/test-sshkey" \
+	-o UserKnownHostsFile=/dev/null \
+	-o StrictHostKeyChecking=no \
+	git@git-deploy-test \
+	"user"
+
 ssh \
 	-p 2222 \
 	-a \
 	-vvvv \
-	-i $key \
+	-i "test-keys/test-sshkey" \
 	-o UserKnownHostsFile=/dev/null \
 	-o StrictHostKeyChecking=no \
-	git@${CONTAINER} \
+	git@git-deploy-test-exthooks \
 	"user"
+
+ssh \
+	-p 2222 \
+	-a \
+	-vvvv \
+	-i "test-keys/test-sshkey" \
+	-o UserKnownHostsFile=/dev/null \
+	-o StrictHostKeyChecking=no \
+	git@git-deploy-test-exthooks-sig \
+	"user"
+
+
 
 teardown
