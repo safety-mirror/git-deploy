@@ -9,4 +9,4 @@ else
 	hook_dir="../hooks"
 fi
 [ ! -f "$hook_dir/post-receive" ] || bash $hook_dir/post-receive | tee /var/log/git-deploy/hooks.log
-backup
+/git/git-shell-commands/backup

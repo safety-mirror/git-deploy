@@ -32,6 +32,6 @@ fi
 if [ $SKIP_KEY -eq 0 ]; then
     echo "Adding key ${NEW_KEY_FP}..."
     cat ${KEYFILE} >> .ssh/authorized_keys
-    git-shell-commands/backup
+    /git/git-shell-commands/backup
 fi
 
