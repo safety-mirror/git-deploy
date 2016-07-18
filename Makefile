@@ -13,7 +13,8 @@ test-env:
 	docker exec --user root -it git-deploy-test-exthooks-sig sh -c "cp -R /git /git-initial"
 
 test: clean build test-env
-	docker exec --user root -it git-deploy-test-runner bats test.bats
+	#docker exec --user root -it git-deploy-test-runner bats test.bats
+	docker exec --user root -it git-deploy-test-runner bash test.sh
 
 develop: clean build test-env
 	docker exec -it git-deploy-test-runner bash

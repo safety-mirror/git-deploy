@@ -1,7 +1,6 @@
 load test_helper
 
 @test "Can resolve ssh-key to username" {
-	ssh_command "user"
 	run ssh_command "user"
 	echo "${output}" | grep "testuser"
 }
