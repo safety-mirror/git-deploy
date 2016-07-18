@@ -2,11 +2,14 @@
 
 source /test/test_helper.bash
 
+set -e
+
 setup
 
 docker ps
 docker network ls
 
+echo "test ssh to git-deploy-test"
 ssh -p 2222 \
 	-a \
 	-i "test-keys/test-sshkey" \
@@ -15,6 +18,7 @@ ssh -p 2222 \
 	git@git-deploy-test \
 	"user"
 
+echo "test ssh to git-deploy-test-exthooks"
 ssh \
 	-p 2222 \
 	-a \
@@ -24,6 +28,7 @@ ssh \
 	git@git-deploy-test-exthooks \
 	"user"
 
+echo "test ssh to git-deploy-test-exthooks-sig"
 ssh \
 	-p 2222 \
 	-a \
@@ -34,6 +39,7 @@ ssh \
 	"user"
 
 teardown
+
 
 setup
 
