@@ -4,6 +4,8 @@ source /test/test_helper.bash
 
 setup
 
+docker ps
+
 key=${2-"test-keys/test-sshkey"}
 ssh \
 	-p 2222 \
