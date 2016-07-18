@@ -19,7 +19,7 @@ destroy_backups(){
 
 reset_container(){
 	for suffix in test test-exthooks test-exthooks-sig; do
-		docker exec --user root -it git-deploy-$suffix sh -c "rm -rf /git && cp -R /git-initial /git && chown -R git: /git && chmod -R 777 /backup_volume"
+		docker exec --user root -i git-deploy-$suffix sh -c "rm -rf /git && cp -R /git-initial /git && chown -R git: /git && chmod -R 777 /backup_volume"
 		import_sshkey "git-deploy-$suffix"
 	done
 	import_gpgkey "94F94EC1" "git-deploy-test-exthooks-sig"
