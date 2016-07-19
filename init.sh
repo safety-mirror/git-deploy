@@ -18,10 +18,7 @@ if [ "$FIRST_RUN" = "true" ]; then
     backup
 fi
 
-rm /git/.profile
-for LINE in `env`; do
-    echo "export $LINE" >> /git/.profile;
-done
+env | sed -e "s/^/export /" -e "s/$/'/" -e "s/=/='/" > /git/.profile
 
 # Loop reads, reading from fifo
 mkfifo /var/log/git-deploy/hooks.log
