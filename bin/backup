@@ -33,6 +33,7 @@ function run()
 	duplicity $FULL $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
 }
 
+retries=0
 function backup()
 {
 	try
@@ -40,6 +41,10 @@ function backup()
 		run || throw 100
 	)
 	catch || (
+		retries=$((retries + 1))
+		if (( retries > 6 )); then
+			throw $ex_code
+		fi
 		sleep 5
 		backup		
 	)
