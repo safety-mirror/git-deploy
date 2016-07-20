@@ -2,6 +2,24 @@
 
 source ~/.profile
 
+function try()
+{
+	[[ $- = *e* ]]; SAVED_OPT_E=$?
+	set +e
+}
+function throw()
+{
+	exit $1
+}
+function catch()
+{
+	export ex_code=$?
+	(( $SAVED_OPT_E )) && set +e
+	return $ex_code
+}
+
+
+
 if [ "$1" = "full" ]; then
 	FULL='full'
 fi
@@ -10,7 +28,29 @@ if [ "$DEBUG" = true ]; then
 	DEBUG_ARGS="-v9"
 fi
 
-duplicity $FULL $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
+function run()
+{
+	duplicity $FULL $DEBUG_ARGS --exclude="/git/.cache" --allow-source-mismatch /git/ $DEST
+}
+
+retries=0
+function backup()
+{
+	try
+	(
+		run || throw 100
+	)
+	catch || (
+		retries=$((retries + 1))
+		if (( retries > 6 )); then
+			throw $ex_code
+		fi
+		sleep 5
+		backup		
+	)
+}
+
+backup
 
 if [ "$FULL" = "full" ]; then
 	duplicity remove-all-but-n-full 1 $DEST --force
