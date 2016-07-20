@@ -1,0 +1,62 @@
+version: '2'
+services:
+
+  git-deploy-test-runner:
+    container_name: 'git-deploy-test-runner'
+    build: ./test
+    volumes:
+      - ./test:/test
+      - /var/run/docker.sock:/var/run/docker.sock
+    links:
+      - "git-deploy-test:git-deploy-test"
+      - "git-deploy-test-exthooks:git-deploy-test-exthooks"
+      - "git-deploy-test-exthooks-sig:git-deploy-test-exthooks-sig"
+    security_opt:
+      - seccomp:unconfined
+    depends_on:
+      - git-deploy-test
+      - git-deploy-test-exthooks
+      - git-deploy-test-exthooks-sig
+    tty: true
+    cap_add: 
+      - SYS_ADMIN
+
+  git-deploy-test:
+    container_name: 'git-deploy-test'
+    extends: git-deploy
+    environment:
+      DEST: file:///backup_volume
+      PASSPHRASE: a_test_passphrase
+      HOOK_REPO: null
+      HOOK_REPO_VERIFY: null
+    volumes:
+      - /dev/urandom:/dev/random
+      - /backup_volume
+
+  git-deploy-test-exthooks:
+    container_name: 'git-deploy-test-exthooks'
+    extends: git-deploy
+    environment:
+      DEST: file:///backup_volume
+      PASSPHRASE: a_test_passphrase
+      HOOK_REPO: 'ssh://git@git-deploy-test:2222/git/testhookrepo'
+      HOOK_REPO_VERIFY: "false"
+    volumes:
+      - /dev/urandom:/dev/random
+      - /backup_volume
+    links:
+      - "git-deploy-test:git-deploy-test"
+
+  git-deploy-test-exthooks-sig:
+    container_name: 'git-deploy-test-exthooks-sig'
+    extends: git-deploy
+    environment:
+      DEST: file:///backup_volume
+      PASSPHRASE: a_test_passphrase
+      HOOK_REPO: 'ssh://git@git-deploy-test:2222/git/testhookrepo'
+      HOOK_REPO_VERIFY: "true"
+    volumes:
+      - /dev/urandom:/dev/random
+      - /backup_volume
+    links:
+      - "git-deploy-test:git-deploy-test"
