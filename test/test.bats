@@ -361,13 +361,41 @@ ${lines[1]}
 @test "Added keys can be used for login successfully" {
 	key=$(cat test-keys/test-sshkey2.pub)
 	reset_container
-	command="ssh-key testuser2 ${key}"
-	run ssh_command "$command"
-	[ $status -eq 0 ]
+	ssh_command "ssh-key testuser2 ${key}"
 
 	run ssh_command "user" test-keys/test-sshkey2
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "testuser2"
+}
+
+@test "Added keys do not overwrite" {
+	key=$(cat test-keys/test-sshkey2.pub)
+	reset_container
+	ssh_command "ssh-key testuser2 ${key}"
+	ssh_command "ssh-key testuser3 ${key}"
+
+	run ssh_command "user" test-keys/test-sshkey2
+	[ $status -eq 0 ]
+	echo ${output} | grep -q "testuser2"
+}
+
+@test "Added keys upgrade" {
+	key=$(cat test-keys/test-sshkey2.pub)
+	docker cp test-keys/test-sshkey2.pub git-deploy-test:/git/.ssh/authorized_keys
+	docker exec --user=root git-deploy-test chown git:git /git/.ssh/authorized_keys
+
+	# SSH works, but doesn't have a user:
+	run ssh_command "user" test-keys/test-sshkey2
+	[ $status -eq 0 ]
+	echo $output | grep -qv "testuser"
+
+	# User is added:
+	ssh_command "ssh-key testuser2 ${key}" test-keys/test-sshkey2
+
+	# SSH still works, now has a user:
+	run ssh_command "user" test-keys/test-sshkey2
+	[ $status -eq 0 ]
+	echo $output | grep -q "testuser2"
 }
 
 @test "Run script from hook dir" {
@@ -397,6 +425,21 @@ ssh_command "hookpull testrepo"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello from the other side"
 	echo ${output} | grep -q "Hi from the outside"
+}
+
+@test "Run script from hook dir - pipes" {
+	set_container "git-deploy-test-exthooks"
+	make_hook_repo
+	clone_repo testhookrepo "git-deploy-test"
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	push_hook testhookrepo master bin/hello
+
+	ssh_command "hookpull testrepo"
+	run ssh_command "run testrepo hello World |"
+	[ $status -eq 0 ]
+	echo ${output} | grep -q "Hello World \|"
+	echo ${output} | grep -q "User testuser"
 }
 
 @test "Run script from hook dir - config.env" {
