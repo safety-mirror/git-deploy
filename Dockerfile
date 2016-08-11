@@ -10,6 +10,7 @@ RUN apt-get clean && \
     jq \
     python-pip \
     python-dev \
+    procmail \
     gnupg2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
