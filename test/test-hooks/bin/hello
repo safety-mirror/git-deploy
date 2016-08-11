@@ -3,4 +3,5 @@
 echo "Hello $1"
 echo "Hi $2"
 echo "From ${ENVIRONMENT}"
+echo "User ${CURRENT_USER}"
 date

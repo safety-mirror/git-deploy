@@ -1,0 +1,15 @@
+version: '2'
+services:
+  git-deploy:
+    container_name: 'git-deploy'
+    security_opt:
+      - seccomp:unconfined
+    build: ./
+    expose:
+      - "2222/tcp"
+    environment:
+      PORT: 2222
+      DEPLOY_TIMEOUT_TERM: 10s
+      DEPLOY_TIMEOUT_KILL: 12s
+    cap_add: 
+      - NET_BIND_SERVICE

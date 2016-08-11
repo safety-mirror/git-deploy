@@ -1,6 +1,7 @@
 FROM debian:jessie
 
-RUN apt-get update && \
+RUN apt-get clean && \
+    apt-get update && \
     LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
     duplicity \
     openssh-server \
@@ -45,8 +46,6 @@ RUN mkdir git-shell-commands && ln -s /opt/git-deploy/bin/* git-shell-commands/
 RUN mkdir git-shell-hooks && ln -s /opt/git-deploy/base-hooks/* git-shell-hooks/
 ADD init.sh /init.sh
 RUN chown -R git: /git/
-
-VOLUME /git
 
 RUN touch /var/log/secure && \
     chown git /var/log/secure

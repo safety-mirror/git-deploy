@@ -44,7 +44,7 @@ Expire-Date: 0
 %commit
 " | gpg2 --batch --gen-key -
 
-	git-shell-commands/backup
+	/git/git-shell-commands/backup
 }
 
 ensure_key git-deploy sign

@@ -27,4 +27,4 @@ chmod +x .git/hooks/*
 
 # Backup addition of new repo
 cd /git
-backup
+/git/git-shell-commands/backup
