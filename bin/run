@@ -11,10 +11,10 @@ if [ $? -eq 0 ]; then
 	source <(git cat-file blob master:config.env)
 fi
 
-if [ ! -z "$HOOK_REPO" ]; then
-	hook_dir="/git/hooks"
+if [ ! -z "$ENVIRONMENT" ]; then
+	hook_dir="/git/${ENVIRONMENT}_hooks"
 else
-	hook_dir="hooks"
+	hook_dir="/git/hooks"
 fi
 
 if [ -x "${hook_dir}/bin/${CMD}" ]; then

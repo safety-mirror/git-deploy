@@ -257,19 +257,18 @@ load test_helper
 
 @test "Generate encryption key callback" {
 	set_container "git-deploy-test-exthooks"
-	make_hook_repo
-	clone_repo testhookrepo "git-deploy-test"
+
+	make_hook_repo testhookrepo
 	ssh_command "mkrepo testrepo"
+	clone_repo testhookrepo "git-deploy-test"
 	clone_repo testrepo
-	push_hook testhookrepo somebranch post-generate-key
-	set_config testrepo HOOK_REPO_REF somebranch
 
-	# Commit a file to prime the hook repo
-	run push_test_commit testrepo somefile
+	push_hook testhookrepo master post-generate-key
 
-	run ssh_command "genkey testkey"
-	[ "$status" -eq 0 ]
-	echo $output | grep -q "post-generate-key success"
+	ssh_command "hookpull testrepo"
+	run ssh_command "genkey testkey testrepo"
+	[ $status -eq 0 ]
+	echo ${output} | grep -q "post-generate-key success"
 }
 
 @test "Generate application secret" {
@@ -451,7 +450,7 @@ ssh_command "hookpull testrepo"
 	push_hook testhookrepo master bin/hello
 	push_hook testrepo master config.env
 
-	# Pull isn't required as the push to "testrepo" already pulled.
+	ssh_command "hookpull testrepo"
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"

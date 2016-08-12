@@ -1,6 +1,7 @@
 FROM debian:jessie
 
-RUN apt-get clean && \
+RUN sed -i "s/httpredir.debian/deb.debian/g" /etc/apt/sources.list && \
+    apt-get clean && \
     apt-get update && \
     apt-get install -y --force-yes \
         wget \

@@ -1,6 +1,7 @@
 FROM debian:jessie
 
-RUN apt-get clean && \
+RUN sed -i "s/httpredir.debian/deb.debian/g" /etc/apt/sources.list && \
+    apt-get clean && \
     apt-get update && \
     LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
     duplicity \

@@ -3,10 +3,28 @@
 source ~/.profile
 set -o pipefail
 
+unset GIT_DIR
+cd ..
+
+refname="$1"
+oldrev="$2"
+newrev="$3"
+
+# source config.env from incoming HEAD if it exists
+git ls-tree --name-only -r $newrev | grep -Fx config.env >> /dev/null
+if [ $? -eq 0 ]; then
+	source <(git cat-file blob $newrev:config.env)
+fi
+
+# Update/use hooks from external repo if configured
 if [ ! -z "$HOOK_REPO" ]; then
-	hook_dir="/git/hooks"
+	if [ ! -z "$ENVIRONMENT" ]; then
+		hook_dir="/git/${ENVIRONMENT}_hooks"
+	else
+		hook_dir="/git/hooks"
+	fi
 else
-	hook_dir="../hooks"
+	hook_dir="hooks"
 fi
 
 [ ! -f "$hook_dir/update" ] || bash $hook_dir/update $@ | tee /var/log/git-deploy/hooks.log

@@ -17,7 +17,12 @@ while read oldrev newrev refname; do
 
 	# Update/use hooks from external repo if configured
 	if [ ! -z "$HOOK_REPO" ]; then
-		hook_dir="/git/hooks"
+		if [ ! -z "$ENVIRONMENT" ]; then
+			hook_dir="/git/${ENVIRONMENT}_hooks"
+		else
+			hook_dir="/git/hooks"
+		fi
+		
 		if [ ! -d "$hook_dir" ]; then
 			mkdir -p $hook_dir
 			git clone $HOOK_REPO $hook_dir

@@ -1,5 +1,15 @@
 #!/bin/bash
 
+source ~/.profile
+
+export ENVIRONMENT=$(echo $2 | sed 's/\.git$//')
+
+if [ ! -z "$ENVIRONMENT" ]; then
+	hook_dir="/git/${ENVIRONMENT}_hooks"
+else
+	hook_dir="/git/hooks"
+fi
+
 # Generate keypairs for protecting secrets
 
 KEY_SIZE=4096
@@ -50,4 +60,6 @@ Expire-Date: 0
 ensure_key git-deploy sign
 ensure_key ${KEY_NAME} encrypt true
 
-git-shell-hooks/post-generate-key $@
+cd /git
+[ ! -f "$hook_dir/post-generate-key" ] || bash $hook_dir/post-generate-key $@ | tee /var/log/git-deploy/hooks.log
+/git/git-shell-commands/backup

@@ -22,7 +22,9 @@ git config --bool receive.denyCurrentBranch false
 # 2. Run user-defined pre-receive/update hooks
 # 3. Run user-defined post-receive hook
 # 4. Backup
-cp /opt/git-deploy/base-hooks/* .git/hooks/
+ln -s /opt/git-deploy/base-hooks/post-receive .git/hooks/
+ln -s /opt/git-deploy/base-hooks/pre-receive .git/hooks/
+ln -s /opt/git-deploy/base-hooks/update .git/hooks/
 chmod +x .git/hooks/*
 
 # Backup addition of new repo
