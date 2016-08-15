@@ -1,36 +1,42 @@
 #!/bin/bash
 
+# shellcheck disable=SC1090
 source ~/.profile
 
-export ENVIRONMENT=$(echo $1 | sed 's/\.git$//')
+environment=${1/.git/}
+hook_branch=${2-master}
 
-cd /git/${ENVIRONMENT}.git
-git ls-tree --name-only -r master | grep -Fx config.env 2>&1 > /dev/null
-if [ $? -eq 0 ]; then
+cd "/git/${environment}.git" || exit 1
+if git ls-tree --name-only -r "$hook_branch" | \
+  grep -qFx config.env >/dev/null 2>&1; then
+	# shellcheck disable=SC1090
 	source <(git cat-file blob master:config.env)
 fi
 
 if [ ! -z "$HOOK_REPO" ]; then
-	if [ ! -z "$ENVIRONMENT" ]; then
-		hook_dir="/git/${ENVIRONMENT}_hooks"
+	if [ ! -z "$environment" ]; then
+		hook_dir="/git/${environment}_hooks"
 	else
 		hook_dir="/git/hooks"
 	fi
 	if [ ! -d "$hook_dir" ]; then
 		mkdir -p $hook_dir
-		git clone $HOOK_REPO $hook_dir
+		git clone "$HOOK_REPO" "$hook_dir" >/dev/null 2>&1
 	fi
 	git \
 		--git-dir="$hook_dir/.git" \
 		--work-tree="$hook_dir" \
-		fetch --all
+		fetch --all >/dev/null 2>&1
 	if [ ! -z "$HOOK_REPO_REF" ]; then
 		git \
 			--git-dir="$hook_dir/.git" \
 			--work-tree="$hook_dir" \
-			reset --hard origin/$HOOK_REPO_REF
+			reset --hard "origin/$HOOK_REPO_REF" >/dev/null 2>&1
 	else
-		git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
+		git \
+			--git-dir="$hook_dir/.git" \
+			--work-tree="$hook_dir" \
+			pull >/dev/null 2>&1
 	fi
 	if [ "$HOOK_REPO_VERIFY" = true ]; then
 		sign_status=$( git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
@@ -40,3 +46,5 @@ if [ ! -z "$HOOK_REPO" ]; then
 		fi
 	fi
 fi
+
+echo -n $hook_dir
