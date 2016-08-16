@@ -5,19 +5,13 @@ source /opt/git-deploy/base-hooks/helpers.sh
 while read oldrev newrev refname; do
 	setup_env "$newrev"
 	if [ -f "$HOOK_DIR/pre-receive" ]; then
-		(
-			if ! flock -nx 201; then
-				echo "Unable to acquire local deploy lock, another git push is in progress"
-				exit 1
-			fi
-			if [ "${CAPTURE_OUTPUT}" == "true" ]; then
-				echo "$oldrev" "$newrev" "$refname" \
-					| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" bash "$HOOK_DIR/pre-receive" 2>&1 \
-					| tee /var/log/git-deploy/hooks.log
-			else
-				echo "$oldrev" "$newrev" "$refname" \
-					| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" bash "$HOOK_DIR/pre-receive"
-			fi
-		) 201>pre_receive_lock
+		if [ "${CAPTURE_OUTPUT}" == "true" ]; then
+			echo "$oldrev" "$newrev" "$refname" \
+				| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" bash "$HOOK_DIR/pre-receive" 2>&1 \
+				| tee /var/log/git-deploy/hooks.log
+		else
+			echo "$oldrev" "$newrev" "$refname" \
+				| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" bash "$HOOK_DIR/pre-receive"
+		fi
 	fi
 done
