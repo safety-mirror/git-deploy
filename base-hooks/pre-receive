@@ -1,57 +1,12 @@
 #!/bin/bash
 
-source ~/.profile
-set -o pipefail
-
-unset GIT_DIR
-cd ..
-env -i git reset --hard
+source /opt/git-deploy/base-hooks/helpers.sh
 
 while read oldrev newrev refname; do
 
-	# source config.env from incoming HEAD if it exists
-	git ls-tree --name-only -r $newrev | grep -Fx config.env >> /dev/null
-	if [ $? -eq 0 ]; then
-		source <(git cat-file blob $newrev:config.env)
-	fi
+	setup_env "$newrev"
 
-	# Update/use hooks from external repo if configured
-	if [ ! -z "$HOOK_REPO" ]; then
-		if [ ! -z "$ENVIRONMENT" ]; then
-			hook_dir="/git/${ENVIRONMENT}_hooks"
-		else
-			hook_dir="/git/hooks"
-		fi
-		
-		if [ ! -d "$hook_dir" ]; then
-			mkdir -p $hook_dir
-			git clone $HOOK_REPO $hook_dir
-		fi
-		git \
-			--git-dir="$hook_dir/.git" \
-			--work-tree="$hook_dir" \
-			fetch --all
-		if [ ! -z "$HOOK_REPO_REF" ]; then
-			git \
-				--git-dir="$hook_dir/.git" \
-				--work-tree="$hook_dir" \
-				reset --hard origin/$HOOK_REPO_REF
-		else
-			git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
-		fi
-		
-		if [ "$HOOK_REPO_VERIFY" = true ]; then
-			sign_status=$( git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
-			if [ "$sign_status" != "G" ]; then
-				echo "Latest commit in $HOOK_REPO is not signed by a known key"
-				exit 1
-			fi
-		fi
-	else
-		hook_dir="hooks"
-	fi
-
-	if [ -f "$hook_dir/pre-receive" ]; then
+	if [ -f "$HOOK_DIR/pre-receive" ]; then
 		(
 			if ! flock -nx 201; then
 				echo "Unable to acquire local deploy lock, another git push is in progress"
@@ -59,12 +14,12 @@ while read oldrev newrev refname; do
 			fi
 
 			if [ "${CAPTURE_OUTPUT}" == "true" ]; then
-				echo $oldrev $newrev $refname \
-					| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive 2>&1 \
+				echo "$oldrev" "$newrev" "$refname" \
+					| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" bash "$HOOK_DIR/pre-receive" 2>&1 \
 					| tee /var/log/git-deploy/hooks.log
 			else
-				echo $oldrev $newrev $refname \
-					| timeout -k ${DEPLOY_TIMEOUT_KILL} ${DEPLOY_TIMEOUT_TERM} bash $hook_dir/pre-receive
+				echo "$oldrev" "$newrev" "$refname" \
+					| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" bash "$HOOK_DIR/pre-receive"
 			fi
 		) 201>pre_receive_lock
 	fi

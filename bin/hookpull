@@ -1,49 +1,7 @@
 #!/bin/bash
 
-# shellcheck disable=SC1090
-source ~/.profile
+source /opt/git-deploy/base-hooks/helpers.sh
 
-environment=${1/.git//}
-hook_branch=${2-master}
+export ENVIRONMENT=${1/.git$//}
 
-cd "/git/${environment}" || exit 1
-if git ls-tree --name-only -r "$hook_branch" 2>&1 | grep -qFx config.env; then
-	# shellcheck disable=SC1090
-	source <(git cat-file blob master:config.env)
-fi
-
-if [ ! -z "$HOOK_REPO" ]; then
-	if [ ! -z "$environment" ]; then
-		hook_dir="/git/${environment}_hooks"
-	else
-		hook_dir="/git/hooks"
-	fi
-	if [ ! -d "$hook_dir" ]; then
-		mkdir -p $hook_dir
-		git clone "$HOOK_REPO" "$hook_dir" >/dev/null 2>&1
-	fi
-	git \
-		--git-dir="$hook_dir/.git" \
-		--work-tree="$hook_dir" \
-		fetch --all >/dev/null 2>&1
-	if [ ! -z "$HOOK_REPO_REF" ]; then
-		git \
-			--git-dir="$hook_dir/.git" \
-			--work-tree="$hook_dir" \
-			reset --hard "origin/$HOOK_REPO_REF" >/dev/null 2>&1
-	else
-		git \
-			--git-dir="$hook_dir/.git" \
-			--work-tree="$hook_dir" \
-			pull >/dev/null 2>&1
-	fi
-	if [ "$HOOK_REPO_VERIFY" = true ]; then
-		sign_status=$( git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
-		if [ "$sign_status" != "G" ]; then
-			echo "Latest commit in $HOOK_REPO is not signed by a known key"
-			exit 1
-		fi
-	fi
-fi
-
-echo -n $hook_dir
+setup_env master "/git/$ENVIRONMENT"
