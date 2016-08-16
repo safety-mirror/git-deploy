@@ -46,7 +46,7 @@ setup_env(){
 	source ~/.profile
 	set -o pipefail
 	unset GIT_DIR
-	if [ ! -z "$env" ]; then
+	if [ ! -z "$dir" ]; then
 		cd "$dir"
 	else
 		cd ..
