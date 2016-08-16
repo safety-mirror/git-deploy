@@ -3,12 +3,11 @@
 # shellcheck disable=SC1090
 source ~/.profile
 
-environment=${1/.git/}
+environment=${1/.git//}
 hook_branch=${2-master}
 
-cd "/git/${environment}.git" || exit 1
-if git ls-tree --name-only -r "$hook_branch" | \
-  grep -qFx config.env >/dev/null 2>&1; then
+cd "/git/${environment}" || exit 1
+if git ls-tree --name-only -r "$hook_branch" 2>&1 | grep -qFx config.env; then
 	# shellcheck disable=SC1090
 	source <(git cat-file blob master:config.env)
 fi
