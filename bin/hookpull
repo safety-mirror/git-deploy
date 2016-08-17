@@ -1,42 +1,7 @@
 #!/bin/bash
 
-source ~/.profile
+source /opt/git-deploy/base-hooks/helpers.sh
 
-export ENVIRONMENT=$(echo $1 | sed 's/\.git$//')
+export ENVIRONMENT=${1/.git$//}
 
-cd /git/${ENVIRONMENT}.git
-git ls-tree --name-only -r master | grep -Fx config.env 2>&1 > /dev/null
-if [ $? -eq 0 ]; then
-	source <(git cat-file blob master:config.env)
-fi
-
-if [ ! -z "$HOOK_REPO" ]; then
-	if [ ! -z "$ENVIRONMENT" ]; then
-		hook_dir="/git/${ENVIRONMENT}_hooks"
-	else
-		hook_dir="/git/hooks"
-	fi
-	if [ ! -d "$hook_dir" ]; then
-		mkdir -p $hook_dir
-		git clone $HOOK_REPO $hook_dir
-	fi
-	git \
-		--git-dir="$hook_dir/.git" \
-		--work-tree="$hook_dir" \
-		fetch --all
-	if [ ! -z "$HOOK_REPO_REF" ]; then
-		git \
-			--git-dir="$hook_dir/.git" \
-			--work-tree="$hook_dir" \
-			reset --hard origin/$HOOK_REPO_REF
-	else
-		git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" pull
-	fi
-	if [ "$HOOK_REPO_VERIFY" = true ]; then
-		sign_status=$( git --git-dir="$hook_dir/.git" --work-tree="$hook_dir" log --show-signature --pretty="%G?" -1 HEAD | tail -n1 )
-		if [ "$sign_status" != "G" ]; then
-			echo "Latest commit in $HOOK_REPO is not signed by a known key"
-			exit 1
-		fi
-	fi
-fi
+setup_env master "/git/${ENVIRONMENT}.git"

@@ -1,31 +1,20 @@
 #!/bin/bash
 
-source ~/.profile
-set -o pipefail
-
-unset GIT_DIR
-cd ..
+source /opt/git-deploy/base-hooks/helpers.sh
 
 while read oldrev newrev refname; do
-
-	# source config.env from incoming HEAD if it exists
-	git ls-tree --name-only -r $newrev | grep -Fx config.env >> /dev/null
-	if [ $? -eq 0 ]; then
-		source <(git cat-file blob $newrev:config.env)
-	fi
-
-	# Update/use hooks from external repo if configured
-	if [ ! -z "$HOOK_REPO" ]; then
-		if [ ! -z "$ENVIRONMENT" ]; then
-			hook_dir="/git/${ENVIRONMENT}_hooks"
+	setup_env "$newrev"
+	if [ -f "$HOOK_DIR/post-receive" ]; then
+		if [ "${CAPTURE_OUTPUT}" == "true" ]; then
+			echo "$oldrev" "$newrev" "$refname" \
+				| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" \
+					bash "$HOOK_DIR/post-receive" 2>&1 \
+				| tee /var/log/git-deploy/hooks.log
 		else
-			hook_dir="/git/hooks"
+			echo "$oldrev" "$newrev" "$refname" \
+				| timeout -k "$DEPLOY_TIMEOUT_KILL" "$DEPLOY_TIMEOUT_TERM" \
+					bash "$HOOK_DIR/post-receive"
 		fi
-	else
-		hook_dir="hooks"
 	fi
-
-	[ ! -f "$hook_dir/post-receive" ] || bash $hook_dir/post-receive | tee /var/log/git-deploy/hooks.log
 	/git/git-shell-commands/backup
-
 done
