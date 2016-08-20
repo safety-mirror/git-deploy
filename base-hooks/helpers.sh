@@ -56,5 +56,10 @@ setup_env(){
 		# shellcheck disable=SC1090
 		source <(git cat-file blob "$ref:config.env")
 	fi
+	if [ "$DEBUG" == "true" ]; then
+		export CAPTURE_OUTPUT="false"
+		env
+		set -x
+	fi
 	get_hook_dir
 }
