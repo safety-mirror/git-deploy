@@ -2,7 +2,6 @@
 
 USERNAME=$1
 PUBKEY="$2 $3 $4"
-ENVIRONMENT="$5"
 
 if [[ -z "${PUBKEY// }" ]]; then
 	exit 1
@@ -62,4 +61,4 @@ fi
 rm -f $KEYFILE
 
 cd /git
-[ ! -f "$hook_dir/post-ssh-key" ] || bash $hook_dir/post-ssh-key ${USERNAME} ${PUBKEY} ${ENVIRONMENT} | tee /var/log/git-deploy/hooks.log
+[ ! -f "$hook_dir/post-ssh-key" ] || bash $hook_dir/post-ssh-key $@ | tee /var/log/git-deploy/hooks.log
