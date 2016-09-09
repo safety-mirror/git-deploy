@@ -59,3 +59,6 @@ if [ $SKIP_KEY -eq 0 ]; then
 fi
 
 rm -f $KEYFILE
+
+cd /git
+[ ! -f "$hook_dir/post-ssh-key" ] || bash $hook_dir/post-ssh-key $@ | tee /var/log/git-deploy/hooks.log
