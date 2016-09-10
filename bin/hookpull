@@ -4,4 +4,4 @@ source /opt/git-deploy/base-hooks/helpers.sh
 
 export ENVIRONMENT=${1/.git$//}
 
-setup_env master "/git/${ENVIRONMENT}.git"
+setup_env master "" "/git/${ENVIRONMENT}.git"

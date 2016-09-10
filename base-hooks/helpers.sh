@@ -41,8 +41,19 @@ get_hook_dir(){
 }
 
 setup_env(){
-	ref=${1-master}
-	dir=$2
+	oldrev=${1-master}
+	newrev=${2-master}
+	dir=$3
+	files_changed=$(git diff --name-only "$oldrev" "$newrev")
+
+	# Enable debugging if requested
+	if [ "$DEBUG" == "true" ]; then
+		export CAPTURE_OUTPUT="false"
+		env
+		set -x
+	fi
+
+	# Environment sanity checking
 	source ~/.profile
 	set -o pipefail
 	unset GIT_DIR
@@ -52,14 +63,31 @@ setup_env(){
 		cd ..
 	fi
 	env -i git reset --hard
-	if git ls-tree --name-only -r "$ref" 2>&1 | grep -qFx config.env; then
+
+	# Source config.env if present in old revision
+	if git ls-tree --name-only -r "$oldrev" 2>&1 | grep -qFx config.env; then
 		# shellcheck disable=SC1090
-		source <(git cat-file blob "$ref:config.env")
+		source <(git cat-file blob "$oldrev:config.env")
 	fi
-	if [ "$DEBUG" == "true" ]; then
-		export CAPTURE_OUTPUT="false"
-		env
-		set -x
+
+	# If config.env changed:
+	if echo "$files_changed" | grep -e '^config.env$' >/dev/null; then
+
+		# If ADMIN_USERS defined:
+		# Only permit changes to config.env if author is in list
+		if [[ ! -z ${ADMIN_USERS+x} ]]; then
+			match=" $CURRENT_USER|$CURRENT_USER "
+			if [[ "$ADMIN_USERS" =~ $match ]]; then
+				source <(git cat-file blob "$newrev:config.env")
+			else
+				echo "You must be listed in ADMIN_USERS to alter config.env"
+				exit 1
+			fi
+		fi
+
+		# If we made it this far, trust/source new revision of config.env
+		source <(git cat-file blob "$newrev:config.env")
 	fi
+
 	get_hook_dir
 }
