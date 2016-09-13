@@ -343,7 +343,7 @@ ${lines[1]}
 	echo ${output} | grep -q "Rejecting badfile"
 }
 
-@test "ssh key validation fails with a bad key" {
+@test "SSH key validation fails with a bad key" {
 	key=$(cat test-keys/test-sshkey.pub | cut -b 512-)
 	command="ssh-key badkey '${key}'"
 	run ssh_command "$command"
@@ -473,5 +473,10 @@ ssh_command "hookpull testrepo"
 	push_hook testhookrepo master bin/hello
 
 	run ssh_command "run testrepo hello World"
+	[ $status -eq 1 ]
+}
+
+@test "Avoid 'login' fork bomb" {
+	run ssh_command "login"
 	[ $status -eq 1 ]
 }
