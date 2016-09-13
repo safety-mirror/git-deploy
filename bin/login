@@ -2,4 +2,10 @@
 
 export CURRENT_USER=$1
 
+if [[ $SSH_ORIGINAL_COMMAND == login* ]]; then
+	exit 1
+elif [[ $SSH_ORIGINAL_COMMAND == restore* ]]; then
+	exit 1
+fi
+
 exec git-shell -c "$SSH_ORIGINAL_COMMAND"
