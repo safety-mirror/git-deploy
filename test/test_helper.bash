@@ -99,7 +99,7 @@ set_config() {
 	local value=${3-bar}
 	local repo_folder="/tmp/git-deploy-test/$1"
 	if [ -d "$repo_folder" ]; then
-		echo "export $key=$value" >> $repo_folder/config.env
+		echo "export $key=\"$value\"" >> $repo_folder/config.env
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder add .
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder commit -m "test commit"
 		git --git-dir=$repo_folder/.git --work-tree=$repo_folder push origin master

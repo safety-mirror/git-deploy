@@ -76,7 +76,7 @@ setup_env(){
 		# If ADMIN_USERS defined:
 		# Only permit changes to config.env if author is in list
 		if [[ ! -z ${ADMIN_USERS+x} ]]; then
-			match=" $CURRENT_USER|$CURRENT_USER "
+			match="$CURRENT_USER| $CURRENT_USER|$CURRENT_USER "
 			if [[ "$ADMIN_USERS" =~ $match ]]; then
 				source <(git cat-file blob "$newrev:config.env")
 			else
