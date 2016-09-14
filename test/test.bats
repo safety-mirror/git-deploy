@@ -403,10 +403,10 @@ ${lines[1]}
 	ssh_command "ssh-key testuser ${key}"
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-    run set_config testrepo ADMIN_USERS "adminuser"
+	run set_config testrepo ADMIN_USERS "adminuser"
 	[ $status -eq 0 ]
 
-    run set_config testrepo SOMEKEY "someval"
+	run set_config testrepo SOMEKEY "someval"
 	[ $status -eq 1 ]
 }
 
@@ -416,10 +416,10 @@ ${lines[1]}
 	ssh_command "ssh-key testuser ${key}"
 	ssh_command "mkrepo testrepo"
 	clone_repo testrepo
-    run set_config testrepo ADMIN_USERS "someuser someuser2 testuser"
+	run set_config testrepo ADMIN_USERS "someuser someuser2 testuser"
 	[ $status -eq 0 ]
 
-    run set_config testrepo SOMEKEY "someval"
+	run set_config testrepo SOMEKEY "someval"
 	[ $status -eq 0 ]
 }
 
