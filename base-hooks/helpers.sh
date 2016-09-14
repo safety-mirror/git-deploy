@@ -44,7 +44,7 @@ setup_env(){
 	oldrev=${1-master}
 	newrev=${2-master}
 	dir=$3
-	files_changed=$(git diff --name-only "$oldrev" "$newrev")
+	files_changed=$(git diff --name-only "$oldrev" "$newrev" 2>&1)
 
 	# Enable debugging if requested
 	if [ "$DEBUG" == "true" ]; then
@@ -70,11 +70,11 @@ setup_env(){
 		source <(git cat-file blob "$oldrev:config.env")
 	fi
 
-	# If config.env changed:
-	if echo "$files_changed" | grep -e '^config.env$' >/dev/null; then
+	# If file outside of apps/ changed, such as config.env:
+	if echo "$files_changed" | grep -qve '^apps/' >/dev/null; then
 
 		# If ADMIN_USERS defined:
-		# Only permit changes to config.env if author is in list
+		# Only permit changes to files outside apps/ if author is in list
 		if [[ ! -z ${ADMIN_USERS+x} ]]; then
 			match="$CURRENT_USER| $CURRENT_USER|$CURRENT_USER "
 			if [[ "$ADMIN_USERS" =~ $match ]]; then

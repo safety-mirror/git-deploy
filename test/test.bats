@@ -397,7 +397,7 @@ ${lines[1]}
 	echo $output | grep -q "testuser2"
 }
 
-@test "User rejected from editing config.env if not in ADMIN_USERS" {
+@test "User rejected from editing root dir files if not in ADMIN_USERS" {
 	key=$(cat test-keys/test-sshkey.pub)
 	reset_container
 	ssh_command "ssh-key testuser ${key}"
@@ -408,9 +408,12 @@ ${lines[1]}
 
 	run set_config testrepo SOMEKEY "someval"
 	[ $status -eq 1 ]
+
+	run push_hook testrepo master testfile
+	[ $status -eq 1 ]
 }
 
-@test "User allowed to edit config.env if in ADMIN_USERS" {
+@test "User allowed to edit root dir files if in ADMIN_USERS" {
 	key=$(cat test-keys/test-sshkey.pub)
 	reset_container
 	ssh_command "ssh-key testuser ${key}"
@@ -420,6 +423,9 @@ ${lines[1]}
 	[ $status -eq 0 ]
 
 	run set_config testrepo SOMEKEY "someval"
+	[ $status -eq 0 ]
+
+	run push_hook testrepo master testfile
 	[ $status -eq 0 ]
 }
 
@@ -431,7 +437,7 @@ ${lines[1]}
 	clone_repo testrepo
 	push_hook testhookrepo master bin/hello
 
-ssh_command "hookpull testrepo"
+	ssh_command "hookpull testrepo"
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"
