@@ -3,7 +3,7 @@
 source /opt/git-deploy/base-hooks/helpers.sh
 
 while read oldrev newrev refname; do
-	setup_env "$newrev"
+	setup_env "$oldrev" "$newrev"
 	if [ -f "$HOOK_DIR/post-receive" ]; then
 		if [ "${CAPTURE_OUTPUT}" == "true" ]; then
 			echo "$oldrev" "$newrev" "$refname" \

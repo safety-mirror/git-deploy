@@ -41,8 +41,19 @@ get_hook_dir(){
 }
 
 setup_env(){
-	ref=${1-master}
-	dir=$2
+	oldrev=${1-master}
+	newrev=${2-master}
+	dir=$3
+	files_changed=$(git diff --name-only "$oldrev" "$newrev" 2>&1)
+
+	# Enable debugging if requested
+	if [ "$DEBUG" == "true" ]; then
+		export CAPTURE_OUTPUT="false"
+		env
+		set -x
+	fi
+
+	# Environment sanity checking
 	source ~/.profile
 	set -o pipefail
 	unset GIT_DIR
@@ -52,14 +63,29 @@ setup_env(){
 		cd ..
 	fi
 	env -i git reset --hard
-	if git ls-tree --name-only -r "$ref" 2>&1 | grep -qFx config.env; then
+
+	# Source config.env if present in old revision
+	if git ls-tree --name-only -r "$oldrev" 2>&1 | grep -qFx config.env; then
 		# shellcheck disable=SC1090
-		source <(git cat-file blob "$ref:config.env")
+		source <(git cat-file blob "$oldrev:config.env")
 	fi
-	if [ "$DEBUG" == "true" ]; then
-		export CAPTURE_OUTPUT="false"
-		env
-		set -x
+
+	# If file outside of apps/ changed, such as config.env:
+	if echo "$files_changed" | grep -qve '^apps/' >/dev/null; then
+
+		# If ADMIN_USERS defined:
+		# Only permit changes to files outside apps/ if author is in list
+		if [[ ! -z ${ADMIN_USERS+x} ]]; then
+			match="$CURRENT_USER| $CURRENT_USER|$CURRENT_USER "
+			if [[ ! "$ADMIN_USERS" =~ $match ]]; then
+				echo "You must be in ADMIN_USERS to alter files outside apps/"
+				exit 1
+			fi
+		fi
+
+		#If we made it here, trust/source new revision of config.env
+		source <(git cat-file blob "$newrev:config.env")
 	fi
+
 	get_hook_dir
 }

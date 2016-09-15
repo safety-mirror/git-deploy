@@ -3,7 +3,7 @@
 source /opt/git-deploy/base-hooks/helpers.sh
 
 while read oldrev newrev refname; do
-	setup_env "$newrev"
+	setup_env "$oldrev" "$newrev"
 	if [ -f "$HOOK_DIR/pre-receive" ]; then
 		(
 			if ! flock -nx 201; then

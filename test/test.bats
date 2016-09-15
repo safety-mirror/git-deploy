@@ -397,6 +397,38 @@ ${lines[1]}
 	echo $output | grep -q "testuser2"
 }
 
+@test "User rejected from editing root dir files if not in ADMIN_USERS" {
+	key=$(cat test-keys/test-sshkey.pub)
+	reset_container
+	ssh_command "ssh-key testuser ${key}"
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	run set_config testrepo ADMIN_USERS "adminuser"
+	[ $status -eq 0 ]
+
+	run set_config testrepo SOMEKEY "someval"
+	[ $status -eq 1 ]
+
+	run push_hook testrepo master testfile
+	[ $status -eq 1 ]
+}
+
+@test "User allowed to edit root dir files if in ADMIN_USERS" {
+	key=$(cat test-keys/test-sshkey.pub)
+	reset_container
+	ssh_command "ssh-key testuser ${key}"
+	ssh_command "mkrepo testrepo"
+	clone_repo testrepo
+	run set_config testrepo ADMIN_USERS "someuser someuser2 testuser"
+	[ $status -eq 0 ]
+
+	run set_config testrepo SOMEKEY "someval"
+	[ $status -eq 0 ]
+
+	run push_hook testrepo master testfile
+	[ $status -eq 0 ]
+}
+
 @test "Run script from hook dir" {
 	set_container "git-deploy-test-exthooks"
 	make_hook_repo
@@ -405,7 +437,7 @@ ${lines[1]}
 	clone_repo testrepo
 	push_hook testhookrepo master bin/hello
 
-ssh_command "hookpull testrepo"
+	ssh_command "hookpull testrepo"
 	run ssh_command "run testrepo hello World"
 	[ $status -eq 0 ]
 	echo ${output} | grep -q "Hello World"
