@@ -77,15 +77,13 @@ setup_env(){
 		# Only permit changes to files outside apps/ if author is in list
 		if [[ ! -z ${ADMIN_USERS+x} ]]; then
 			match="$CURRENT_USER| $CURRENT_USER|$CURRENT_USER "
-			if [[ "$ADMIN_USERS" =~ $match ]]; then
-				source <(git cat-file blob "$newrev:config.env")
-			else
-				echo "You must be listed in ADMIN_USERS to alter config.env"
+			if [[ ! "$ADMIN_USERS" =~ $match ]]; then
+				echo "You must be in ADMIN_USERS to alter files outside apps/"
 				exit 1
 			fi
 		fi
 
-		# If we made it this far, trust/source new revision of config.env
+		#If we made it here, trust/source new revision of config.env
 		source <(git cat-file blob "$newrev:config.env")
 	fi
 
