@@ -1,9 +1,8 @@
 #!/bin/bash
-
-source /opt/git-deploy/base-hooks/helpers.sh
+source /opt/git-deploy/base-hooks/helpers.sh >> /var/log/git-deploy/hooks.log
 
 while read oldrev newrev refname; do
-	setup_env "$oldrev" "$newrev"
+	setup_env "$oldrev" "$newrev" >> /var/log/git-deploy/hooks.log
 	if [ -f "$HOOK_DIR/pre-receive" ]; then
 		(
 			if ! flock -nx 201; then

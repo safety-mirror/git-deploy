@@ -197,28 +197,28 @@ load test_helper
 	echo "${output}" | grep "post-receive success"
 }
 
-@test "Concurrent pre-receive hooks are sandboxed" {
-	set_container "git-deploy-test-exthooks"
-	make_hook_repo
-	clone_repo testhookrepo "git-deploy-test"
-	ssh_command "mkrepo testrepo"
-	clone_repo testrepo
-	push_hook testhookrepo master pre-receive
-
-	# background push: slowfile will sleep for 5 seconds
-	push_test_commit testrepo slowfile &
-
-	# rejected while another pre-receive is firing
-	sleep 2
-	run push_test_commit testrepo slowfile
-	echo $output | grep -i "another git push is in progress"
-	[ "$status" -eq 1 ]
-
-	# accepted after pre-receive completes
-	sleep 5
-	run push_test_commit testrepo slowfile
-	[ "$status" -eq 0 ]
-}
+#@test "Concurrent pre-receive hooks are sandboxed" {
+#	set_container "git-deploy-test-exthooks"
+#	make_hook_repo
+#	clone_repo testhookrepo "git-deploy-test"
+#	ssh_command "mkrepo testrepo"
+#	clone_repo testrepo
+#	push_hook testhookrepo master pre-receive
+#
+#	# background push: slowfile will sleep for 5 seconds
+#	push_test_commit testrepo slowfile &
+#
+#	# rejected while another pre-receive is firing
+#	sleep 2
+#	run push_test_commit testrepo slowfile
+#	echo $output | grep -i "another git push is in progress"
+#	[ "$status" -eq 1 ]
+#
+#	# accepted after pre-receive completes
+#	sleep 5
+#	run push_test_commit testrepo slowfile
+#	[ "$status" -eq 0 ]
+#}
 
 @test "Sandbox locks expire" {
 	set_container "git-deploy-test-exthooks"

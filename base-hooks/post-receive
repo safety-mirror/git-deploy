@@ -1,9 +1,8 @@
 #!/bin/bash
-
-source /opt/git-deploy/base-hooks/helpers.sh
+source /opt/git-deploy/base-hooks/helpers.sh >> /var/log/git-deploy/hooks.log
 
 while read oldrev newrev refname; do
-	setup_env "$oldrev" "$newrev"
+	setup_env "$oldrev" "$newrev" >> /var/log/git-deploy/hooks.log
 	if [ -f "$HOOK_DIR/post-receive" ]; then
 		if [ "${CAPTURE_OUTPUT}" == "true" ]; then
 			echo "$oldrev" "$newrev" "$refname" \
@@ -16,5 +15,5 @@ while read oldrev newrev refname; do
 					bash "$HOOK_DIR/post-receive"
 		fi
 	fi
-	/git/git-shell-commands/backup
+	/git/git-shell-commands/backup >> /var/log/git-deploy/hooks.log
 done

@@ -1,6 +1,5 @@
 #!/bin/bash
-
-source ~/.profile
+source ~/.profile >> /var/log/git-deploy/hooks.log
 set -o pipefail
 
 unset GIT_DIR
@@ -11,7 +10,7 @@ newrev="$3"
 # source config.env from incoming HEAD if it exists
 if git ls-tree --name-only -r $newrev 2>&1 | grep -qFx config.env; then
 	# shellcheck disable=SC1090
-	source <(git cat-file blob $newrev:config.env)
+	source <(git cat-file blob $newrev:config.env) >> /var/log/git-deploy/hooks.log
 fi
 
 # Update/use hooks from external repo if configured
